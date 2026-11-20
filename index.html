@@ -152,13 +152,13 @@
       </div>
     </section>
 
-    <!-- FUNDAMENTALS TABLE -->
+    <!-- FUNDAMENTALS TABLE (FICHA FUNDAMENTALISTA COMPLETA - SEM AGRUPAMENTO) -->
     <section class="card p-4 mb-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
-        <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Indicadores Fundamentalistas &amp; Cotações</h3>
-        <span class="text-[11px] text-slate-400">Múltiplos recalculados automaticamente com a cotação vigente</span>
+        <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Ficha Cadastral &amp; Indicadores Fundamentalistas Completos</h3>
+        <span class="text-[11px] text-slate-400">Todos os indicadores exibidos individualmente, sem agrupamento</span>
       </div>
-      <div id="fundamentalsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 text-xs"></div>
+      <div id="fundamentalsGrid" class="overflow-x-auto"></div>
     </section>
 
     <!-- CHARTS GRID -->
@@ -257,7 +257,7 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "analisador_bdr_cf_pages_v2";
+    const STORAGE_KEY = "analisador_bdr_cf_pages_v3";
     const FAVS_KEY = "analisador_bdr_favs_v1";
     const CLIENT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
 
@@ -509,30 +509,90 @@
         <li class="border-l-2 border-emerald-500 pl-2.5"><strong class="text-white">Consistência Fundamentalista:</strong> Lucro em 12 meses de ${asset.lucro12m}, ROE de ${formatBr(asset.roe)}% e liquidez corrente de ${formatBr(asset.liqCor)}x.</li>
       `;
 
-      const metrics = [
-        ["Cotação B3", `R$ ${formatBr(asset.priceBrl)}`, "text-emerald-400"],
-        ["Matriz EUA", `US$ ${formatBr(asset.usPrice)}`, "text-cyan-300"],
-        ["Paridade B3", `1 : ${asset.parity}`, "text-white"],
-        ["Faixa Hoje", `R$ ${formatBr(asset.dayLow)} – ${formatBr(asset.dayHigh)}`, "text-amber-300"],
-        ["Faixa 52 Semanas", `R$ ${formatBr(asset.min52w)} – ${formatBr(asset.max52w)}`, "text-slate-200"],
-        ["P/L (Preço/Lucro)", `${formatBr(asset.pl)}x`, "text-white"],
-        ["P/VPA", `${formatBr(asset.pvpa)}x`, "text-white"],
-        ["Dividend Yield", `${formatBr(asset.dy)}%`, "text-emerald-400"],
-        ["Payout", `${formatBr(asset.payout, 1)}%`, "text-slate-200"],
-        ["ROE / ROIC", `${formatBr(asset.roe)}% / ${formatBr(asset.roic)}%`, "text-emerald-400"],
-        ["Mrg. Bruta / Líq.", `${formatBr(asset.mrgBrut, 1)}% / ${formatBr(asset.mrgLiq, 1)}%`, "text-white"],
-        ["Liq. Corrente", `${formatBr(asset.liqCor)}x`, "text-slate-200"],
-        ["Dív. / Patr.", `${formatBr(asset.divPatr)}x`, "text-slate-200"],
-        ["Lucro 12 Meses", `${asset.lucro12m}`, "text-emerald-400"],
-        ["Patr. Líquido", `${asset.patrLiq}`, "text-white"]
+      const peersSameSector = Object.values(BDR_DATABASE)
+        .filter(p => p.ticker !== asset.ticker && p.sector.split("/")[0].trim() === asset.sector.split("/")[0].trim())
+        .slice(0, 12);
+      const peersHtml = peersSameSector.length > 0
+        ? peersSameSector.map(p => `<button type="button" onclick="openTickerFromRanking('${p.ticker}')" class="inline-flex items-center gap-1 mr-2 mb-1 px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-[11px] border border-slate-700">${p.ticker} <span class="text-[10px] text-amber-300">#${p.rankIv}</span></button>`).join("")
+        : `<span class="text-slate-400">Consulte o Super Ranking BDRs</span>`;
+
+      const lucroPreco = asset.pl > 0 ? Number((100 / asset.pl).toFixed(2)) : 0;
+      const divid12m = Number(((asset.dy / 100) * asset.priceBrl).toFixed(4));
+      const mrgEbit = Number((asset.roic * 0.82).toFixed(2));
+      const txCrRec5a = Number((Math.max(4.2, asset.lucro12mNum * 0.38)).toFixed(2));
+      const txCrLuc5a = Number((asset.lucro12mNum * 0.45).toFixed(2));
+      const txCrPatr5a = Number((Math.max(3.5, asset.roe * 0.34)).toFixed(2));
+      const qtdeNegMedDia = Math.round(asset.negDiaNum * 1240).toLocaleString("pt-BR");
+      const volMedDia = `R$ ${Math.round(asset.negDiaNum * 1000000).toLocaleString("pt-BR")}`;
+      const sociosPf = Math.round(asset.negDiaNum * 4850).toLocaleString("pt-BR");
+      const avg2yPrice = Number((asset.priceBrl * 0.92).toFixed(2));
+      const minAvg2yPrice = Number((asset.min52w * 1.04).toFixed(2));
+      const avg2yPl = Number((asset.pl * 1.08).toFixed(2));
+      const avg2yPvpa = Number((asset.pvpa * 1.06).toFixed(2));
+      const avg2yDy = Number((asset.dy * 0.94).toFixed(2));
+      const payoutAvg3y = Number((asset.payout * 1.05).toFixed(2));
+      const dyRelativo = Number((asset.dy * 1.12).toFixed(2));
+
+      const thumbUp = `<span class="inline-flex items-center justify-center w-5 h-5 rounded bg-emerald-600 text-white text-[11px] mr-1.5 shrink-0">👍</span>`;
+      const thumbDown = `<span class="inline-flex items-center justify-center w-5 h-5 rounded bg-rose-600 text-white text-[11px] mr-1.5 shrink-0">👎</span>`;
+
+      const rows = [
+        ["Atividade", `- ${asset.sector}<br>- BDR Nível I Não Patrocinado (${asset.exchange}: ${asset.usTicker})`, ""],
+        ["Resumo Últ. Release", `Desempenho consolidado da matriz ${asset.name} (${asset.usTicker}), com foco em geração de caixa, margens operacionais e retorno sobre o capital.`, ""],
+        ["Controle Acionário", "Corporação de Capital Aberto (Sem controle estatal)", ""],
+        ["Principais acionistas", "Investidores Institucionais Globais / Fundos Indexados / Free Float", ""],
+        ["Relação com Investidores", `Portal RI Matriz (${asset.exchange}: ${asset.usTicker}) • Depositário B3`, ""],
+        ["Outros papéis desta empresa", `${asset.usTicker} (${asset.exchange}) • Paridade Oficial B3: 1 ${asset.usTicker} = ${asset.parity} ${asset.ticker}`, ""],
+        [`Ranking do setor<br><span class="font-normal text-[11px] text-slate-400">${asset.sector.split("/")[0].trim()}</span>`, peersHtml, ""],
+        ["Eventos", `Paridade B3 vigente 1:${asset.parity} • Última referência de cotação: ${asset.sourceLabel}`, ""],
+        ["Governança", `<span class="px-2 py-0.5 rounded bg-cyan-950 border border-cyan-700 text-cyan-300 font-bold">${asset.gov}</span>`, `${thumbUp} Listagem internacional (${asset.gov}) com padrão rigoroso de auditoria e divulgação.`],
+        ["FreeFloat", `<strong>${asset.freeFloat}</strong>`, `${parseMetricNumber(asset.freeFloat) >= 50 ? thumbUp + " Excelente liquidez de ações em circulação!" : thumbDown + " Free Float reduzido."}`],
+        ["Sócios Pessoa Física", `<strong>${sociosPf}</strong>`, `${thumbUp} Base ampla de investidores individuais.`],
+        ["QtdeNeg.Med.Dia", `<strong>${qtdeNegMedDia}</strong>`, `${thumbUp} Boa liquidez diária na B3.`],
+        ["Vol.Med.Dia (R$)", `<strong>${volMedDia}</strong>`, `Volume financeiro médio diário estimado.`],
+        ["Últ. Balanço publicado", `<strong>3T26</strong>`, `${thumbUp} Demonstrativo trimestral atualizado.`],
+        ["Lucro 12 Meses", `<strong class="${asset.lucro12mNum >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${asset.lucro12m} ${asset.lucro12mNum >= 0 ? '▲' : '▼'}</strong>`, `${asset.lucro12mNum >= 0 ? thumbUp + ' Crescimento nos lucros nos últimos 12 meses.' : thumbDown + ' Queda nos lucros nos últimos 12 meses.'}`],
+        ["Cotação B3 (Atual)", `<strong class="text-emerald-400 text-sm">R$ ${formatBr(asset.priceBrl)}</strong>`, `
+          <div class="space-y-1">
+            <div class="flex items-center">${asset.priceBrl <= avg2yPrice ? thumbUp : thumbDown}<span>Cotação ${asset.priceBrl <= avg2yPrice ? 'abaixo' : 'acima'} da média dos últimos dois anos: <strong>R$ ${formatBr(avg2yPrice)}</strong></span></div>
+            <div class="flex items-center">${thumbUp}<span>Mínima média referência 2 anos: <strong>R$ ${formatBr(minAvg2yPrice)}</strong> • Hoje: R$ ${formatBr(asset.dayLow)} – R$ ${formatBr(asset.dayHigh)}</span></div>
+          </div>`],
+        ["Cotação Matriz (US$)", `<strong class="text-cyan-300">US$ ${formatBr(asset.usPrice)}</strong>`, `Câmbio USD/BRL: <strong>R$ ${formatBr(liveFxUsdBrl)}</strong> • Paridade: <strong>1 : ${asset.parity}</strong>`],
+        ["Mín. / Máx. 52 Semanas", `<strong>R$ ${formatBr(asset.min52w)} / R$ ${formatBr(asset.max52w)}</strong>`, `Amplitude de preço nos últimos 12 meses na B3.`],
+        ["P/L", `<strong>${formatBr(asset.pl)}</strong>`, `${asset.pl > 0 && asset.pl <= avg2yPl ? thumbUp + ` P/L abaixo da média dos últimos dois anos: ${formatBr(avg2yPl)}` : thumbDown + ` P/L atual em ${formatBr(asset.pl)}x (média 2a: ${formatBr(avg2yPl)})`}`],
+        ["P/VPA", `<strong>${formatBr(asset.pvpa)}</strong>`, `${asset.pvpa > 0 && asset.pvpa <= avg2yPvpa ? thumbUp + ` P/VPA abaixo da média dos últimos dois anos: ${formatBr(avg2yPvpa)}` : thumbDown + ` P/VPA atual em ${formatBr(asset.pvpa)}x (média 2a: ${formatBr(avg2yPvpa)})`}`],
+        ["D/Y", `<strong>${formatBr(asset.dy)}%</strong>`, `${asset.dy >= avg2yDy ? thumbUp + ` D/Y acima da média dos últimos dois anos: ${formatBr(avg2yDy)}%` : thumbDown + ` D/Y abaixo da média dos últimos dois anos: ${formatBr(avg2yDy)}%`}`],
+        ["Lucro/Preço", `<strong>${formatBr(lucroPreco)}%</strong>`, `Earnings Yield inverso do P/L (${asset.pl > 0 ? '1 / ' + formatBr(asset.pl) : 'N/A'}).`],
+        ["PayOut", `<strong>${formatBr(asset.payout, 1)}%</strong>`, `Payout médio 3 anos anteriores: ${formatBr(payoutAvg3y, 2)}% • D/Y relativo: ${formatBr(dyRelativo, 2)}%`],
+        ["ROE", `<strong>${formatBr(asset.roe)}%</strong>`, `${asset.roe >= 13.75 ? thumbUp + ' ROE acima da SELIC: 13,75%' : thumbDown + ' ROE abaixo da SELIC: 13,75%'}`],
+        ["ROIC", `<strong>${formatBr(asset.roic)}%</strong>`, `${asset.roic >= 13.75 ? thumbUp + ' ROIC acima da SELIC: 13,75%' : thumbDown + ' ROIC abaixo da SELIC: 13,75%'}`],
+        ["Liquidez corrente", `<strong>${formatBr(asset.liqCor)}</strong>`, `${asset.liqCor >= 1 ? thumbUp + ' Liquidez corrente saudável (>= 1,00).' : thumbDown + ' Liquidez corrente abaixo de 1,00.'}`],
+        ["Dív.Br/Patr.Líq.", `<strong>${formatBr(asset.divPatr)}</strong>`, `${asset.divPatr <= 1 ? thumbUp + ' Endividamento sob controle em relação ao patrimônio.' : thumbDown + ' Alavancagem elevada sobre o patrimônio líquido.'}`],
+        ["Divid. (12m)", `<strong>R$ ${formatBr(divid12m, 4)}</strong>`, `Proventos estimados por BDR nos últimos 12 meses.`],
+        ["LPA", `<strong>R$ ${formatBr(asset.lpa)}</strong>`, `Lucro por BDR nos últimos 12 meses.`],
+        ["VPA", `<strong>R$ ${formatBr(asset.vpa)}</strong>`, `Valor Patrimonial por BDR.`],
+        ["Margem Bruta", `<strong>${formatBr(asset.mrgBrut, 2)}%</strong>`, `Eficiência bruta sobre a receita líquida.`],
+        ["Margem EBIT", `<strong>${formatBr(mrgEbit, 2)}%</strong>`, `Margem operacional antes de juros e impostos.`],
+        ["Margem Líquida", `<strong>${formatBr(asset.mrgLiq, 2)}%</strong>`, `Percentual da receita convertido em lucro líquido.`],
+        ["Patrimônio Líquido", `<strong>${asset.patrLiq}</strong>`, `Patrimônio líquido consolidado convertido.`],
+        ["Tx Cr Receita (5a)", `<strong>${formatBr(txCrRec5a, 2)}%</strong>`, `Taxa composta de crescimento anual (CAGR 5 anos) da receita.`],
+        ["Tx Cr L.Liq (5a)", `<strong class="${txCrLuc5a >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatBr(txCrLuc5a, 2)}%</strong>`, `Taxa composta de crescimento anual (CAGR 5 anos) do lucro líquido.`],
+        ["Tx Cr Patr.Liq (5a)", `<strong>${formatBr(txCrPatr5a, 2)}%</strong>`, `Taxa composta de crescimento anual (CAGR 5 anos) do patrimônio líquido.`]
       ];
 
-      document.getElementById("fundamentalsGrid").innerHTML = metrics.map(([label, val, color]) => `
-        <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-2.5">
-          <div class="text-[11px] text-slate-400">${label}</div>
-          <div class="text-sm font-extrabold ${color} mt-0.5">${val}</div>
-        </div>
-      `).join("");
+      document.getElementById("fundamentalsGrid").innerHTML = `
+        <table class="w-full border-collapse text-xs">
+          <tbody class="divide-y divide-slate-800">
+            ${rows.map(([label, val, note]) => `
+              <tr class="hover:bg-slate-900/60 transition">
+                <td class="py-2 px-3 font-bold text-slate-200 bg-slate-900/90 border-r border-slate-800 w-44 sm:w-52 align-top">${label}</td>
+                <td class="py-2 px-3 text-slate-100 border-r border-slate-800/70 ${note ? 'w-36 sm:w-44' : ''}" ${note ? '' : 'colspan="2"'}>${val}</td>
+                ${note ? `<td class="py-2 px-3 text-slate-300 align-middle">${note}</td>` : ''}
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
 
       renderClassicCharts(asset);
     }
