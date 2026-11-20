@@ -1,9 +1,9 @@
-// functions/api/quotes.js (Cloudflare Pages Function)
+// functions/api/quotes.js (Cloudflare Pages Function - Cache 5 minutos)
 const ALLOWED_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type",
   "Content-Type": "application/json; charset=utf-8",
-  "Cache-Control": "public, max-age=60"
+  "Cache-Control": "public, max-age=300, s-maxage=300"
 };
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 4500) {
@@ -77,7 +77,7 @@ export async function onRequest(context) {
       .split(",")
       .map(t => t.trim().toUpperCase().replace(/[^A-Z0-9.]/g, ""))
       .filter(Boolean)
-      .slice(0, 35);
+      .slice(0, 30);
 
     const fxPromise = getUsdBrl();
     const quotesMap = {};
@@ -102,6 +102,7 @@ export async function onRequest(context) {
     return new Response(
       JSON.stringify({
         ok: true,
+        cacheTtlSeconds: 300,
         updatedAt: new Date().toISOString(),
         usdBrl,
         quotes: quotesMap

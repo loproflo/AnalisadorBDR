@@ -26,7 +26,7 @@
       <div>
         <div class="flex items-center gap-2">
           <h1 class="font-extrabold text-white tracking-wide text-base md:text-lg">ANALISADOR BDR</h1>
-          <span class="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-semibold">B3 / NASDAQ / NYSE</span>
+          <span class="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-semibold">100 BDRs • B3 / NASDAQ / NYSE</span>
         </div>
         <p class="text-xs text-slate-400">Análise Fundamentalista, Múltiplos Históricos &amp; Paridade Cambial</p>
       </div>
@@ -37,7 +37,7 @@
         <input id="tickerInput" type="text" value="NVDC34" placeholder="Ex: NVDC34, GOGL34..." class="bg-slate-900 border border-slate-700 text-white text-sm font-bold uppercase rounded-lg px-3 py-2 w-36 focus:outline-none focus:border-amber-500" />
       </div>
       <button id="btnAnalyze" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm px-4 py-2 rounded-lg transition">Analisar BDR</button>
-      <button id="btnRefreshQuotes" class="bg-emerald-700 hover:bg-emerald-600 text-white font-semibold text-sm px-3 py-2 rounded-lg transition flex items-center gap-1.5" title="Atualizar cotações da B3 via servidor">
+      <button id="btnRefreshQuotes" class="bg-emerald-700 hover:bg-emerald-600 text-white font-semibold text-sm px-3 py-2 rounded-lg transition flex items-center gap-1.5" title="Atualizar cotações da B3 via servidor (Cache 5 min)">
         <span>↻</span><span>Atualizar Preços</span>
       </button>
       <button id="btnSyncFx" class="bg-slate-800 hover:bg-slate-700 border border-cyan-700/60 text-cyan-300 font-semibold text-sm px-3 py-2 rounded-lg transition flex items-center gap-1.5">
@@ -53,13 +53,13 @@
       <span class="text-xs text-slate-400 font-semibold mr-1">Atalhos B3:</span>
     </div>
     <div id="syncStatusBadge" class="text-xs px-3 py-1 rounded-full bg-emerald-950/70 border border-emerald-700/50 text-emerald-300 font-medium">
-      Dólar: R$ 5,94 • Pronto
+      Dólar: R$ 5,94 • 100 BDRs prontos
     </div>
   </div>
 
   <div class="flex flex-wrap items-center gap-2 mb-4">
     <button id="tabIndividual" class="px-4 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 transition">📊 Análise Individual &amp; Gráficos Históricos</button>
-    <button id="tabRanking" class="px-4 py-2 rounded-lg text-sm font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition">🏆 Super Ranking BDRs (Value Investing)</button>
+    <button id="tabRanking" class="px-4 py-2 rounded-lg text-sm font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition">🏆 Super Ranking BDRs (100 Ativos)</button>
   </div>
 
   <!-- INDIVIDUAL ANALYSIS VIEW -->
@@ -77,9 +77,10 @@
               <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-bold">DRN</span>
               <span id="assetPriceDisplay" class="text-xl font-extrabold text-emerald-400">Cot. B3: R$ 18,15</span>
               <span id="assetMonthBadge" class="text-xs px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800 font-bold">-20,1% no mês</span>
+              <button id="btnFavCurrent" class="text-base px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 transition" title="Favoritar ativo">♥</button>
             </div>
             <p id="assetCompanyName" class="text-sm font-bold text-white mt-0.5">NVIDIA CORPORATION — BDR Nível I Não Patrocinado</p>
-            <p id="assetSectorLine" class="text-xs text-slate-400">Tecnologia / Semicondutores e Infraestrutura de IA • Matriz: NASDAQ: NVDA</p>
+            <p id="assetSectorLine" class="text-xs text-slate-400">Tecnologia / Semicondutores e IA • Matriz: NASDAQ: NVDA</p>
           </div>
         </div>
 
@@ -101,13 +102,13 @@
 
       <div class="flex flex-wrap items-center justify-between gap-3 pt-3 text-xs">
         <div class="flex flex-wrap items-center gap-4">
-          <span class="text-amber-400 font-bold">★★★★★ <span id="assetRankLabel" class="text-slate-200">#1 Posi. Rank Geral</span></span>
+          <span class="text-amber-400 font-bold">★★★★★ <span id="assetRankLabel" class="text-slate-200">#1 Rank IV • #2 Rank Financ</span></span>
           <div class="flex items-center gap-2">
             <span class="text-slate-400">Score GARP / IV:</span>
             <div class="w-24 h-2 bg-slate-800 rounded-full overflow-hidden">
-              <div id="assetScoreBar" class="h-full bg-emerald-400" style="width: 88%"></div>
+              <div id="assetScoreBar" class="h-full bg-emerald-400" style="width: 91%"></div>
             </div>
-            <span id="assetScoreText" class="text-emerald-400 font-bold">88/100</span>
+            <span id="assetScoreText" class="text-emerald-400 font-bold">91/100</span>
           </div>
         </div>
         <div class="text-slate-400">
@@ -175,31 +176,44 @@
     <section class="card p-4">
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3 mb-3">
         <div>
-          <h2 class="text-base font-extrabold text-amber-400">🏆 Super Ranking BDRs — Value Investing &amp; GARP</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Clique em qualquer cabeçalho de coluna para ordenar ou clique no ticker para abrir os gráficos e a análise completa.</p>
+          <h2 class="text-base font-extrabold text-amber-400">🏆 Super Ranking BDRs — 100 Ativos (Value Investing &amp; GARP)</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Clique em qualquer cabeçalho de coluna para ordenar, em ♥ para favoritar ou no ticker / ícone 📈 para abrir os gráficos.</p>
         </div>
-        <input id="rankingSearch" type="text" placeholder="Filtrar ticker ou empresa..." class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-3 py-2 w-60 focus:outline-none focus:border-amber-500" />
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="btnOnlyFavs" class="px-3 py-2 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 transition">♥ Só Favoritos</button>
+          <input id="rankingSearch" type="text" placeholder="Filtrar ticker, empresa ou setor..." class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-3 py-2 w-60 focus:outline-none focus:border-amber-500" />
+        </div>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse text-xs">
+        <table class="w-full text-left border-collapse text-[11px] whitespace-nowrap">
           <thead>
-            <tr class="border-b border-slate-800 text-slate-400 uppercase text-[11px] select-none">
-              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400" data-sort="rank">#</th>
-              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400" data-sort="ticker">Ticker</th>
-              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400" data-sort="name">Empresa</th>
-              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="parity">Paridade</th>
-              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="usPrice">Matriz (US$)</th>
-              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="priceBrl">Cot. B3 (R$)</th>
-              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="pl">P/L</th>
-              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="pvpa">P/VPA</th>
-              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="dy">D.Y.</th>
-              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="roe">ROE</th>
-              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="roic">ROIC</th>
-              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="score">Score IV</th>
+            <tr class="border-b border-slate-700 bg-[#b8ccf0] text-slate-950 font-extrabold select-none">
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb]" data-sort="ticker">Ação</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] bg-[#8eaee6] text-center" data-sort="rankFinanc">Rank<br>Financ</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] bg-[#8eaee6] text-center" data-sort="rankIv">Rank<br>IV</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="priceBrl">Cot.</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="monthPct">Perc Oscil.</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="pl">P/L</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="pvpa">P/VPA</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="dy">D/Y</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="payout">PayOut</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="roic">ROIC</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="roe">ROE</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="mrgBrut">Mrg<br>Brut</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="mrgLiq">Mrg<br>Liq</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="liqCor">Liq.<br>Cor</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="divPatr">Div/<br>Patr</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="lucro12mNum">Lucro 12Meses</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="negDiaNum">Neg.<br>Dia</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="freeFloatNum">Free<br>float</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-right" data-sort="patrLiqNum">Patr Liq</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-center" data-sort="gov">Gov.</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:bg-[#9fb9eb] text-center" data-sort="fav">♥</th>
+              <th class="py-2.5 px-2 text-center">Graf.</th>
             </tr>
           </thead>
-          <tbody id="rankingTableBody" class="divide-y divide-slate-800/70"></tbody>
+          <tbody id="rankingTableBody" class="divide-y divide-slate-800/80"></tbody>
         </table>
       </div>
     </section>
@@ -243,51 +257,48 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "analisador_bdr_netlify_fn_v3";
+    const STORAGE_KEY = "analisador_bdr_cf_pages_v2";
+    const FAVS_KEY = "analisador_bdr_favs_v1";
+    const CLIENT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
     Object.keys(localStorage).forEach(k => {
-      if (k.startsWith("analisador_bdr_") && k !== STORAGE_KEY) localStorage.removeItem(k);
+      if (k.startsWith("analisador_bdr_") && k !== STORAGE_KEY && k !== FAVS_KEY) localStorage.removeItem(k);
     });
 
     let liveFxUsdBrl = 5.94;
     let charts = {};
-    let currentSort = { key: "rank", asc: true };
+    let currentSort = { key: "rankIv", asc: true };
+    let onlyFavorites = false;
+    let lastBatchSyncTs = 0;
 
-    const VERIFIED_BDRS = [
-      ["NVDC34", "NVDA", "NVIDIA CORPORATION", "Tecnologia / Semicondutores e Infraestrutura de IA", "NASDAQ", 48, 18.15, 18.15, 19.46, 14.45, 21.87, -20.1, 18.67, 15.73, 0.22, 3.8, 71.95, 84.23, 74.7, 58.3, 4.59, -0.29, "+105,0%", 1, 88],
-      ["GOGL34", "GOOGL", "ALPHABET INC.", "Tecnologia / Busca Digital, Publicidade e Nuvem", "NASDAQ", 8, 136.39, 135.40, 138.10, 108.20, 145.90, -2.1, 21.40, 6.75, 0.48, 10.3, 28.40, 32.10, 58.2, 27.8, 1.98, -0.24, "+26,8%", 2, 87],
-      ["MSFT34", "MSFT", "MICROSOFT CORPORATION", "Tecnologia / Software Corporativo, Nuvem Azure e IA", "NASDAQ", 20, 123.38, 122.90, 124.85, 112.10, 139.50, -3.4, 31.80, 11.40, 0.78, 24.8, 31.20, 36.50, 69.8, 35.6, 1.30, -0.12, "+14,2%", 3, 85],
-      ["M1TA34", "META", "META PLATFORMS INC.", "Tecnologia / Redes Sociais e Publicidade Digital", "NASDAQ", 20, 168.40, 166.80, 170.20, 118.40, 179.90, 4.2, 24.90, 8.90, 0.35, 8.7, 32.10, 35.80, 81.5, 34.2, 2.75, -0.31, "+42,5%", 4, 86],
-      ["MUTC34", "MU", "MICRON TECHNOLOGY INC.", "Tecnologia / Memórias DRAM, NAND e HBM para IA", "NASDAQ", 6, 97.60, 96.20, 99.40, 74.50, 148.20, -8.5, 14.20, 2.35, 0.46, 6.5, 14.80, 16.90, 36.4, 18.2, 2.60, 0.12, "+68,0%", 5, 82],
-      ["TSMC34", "TSM", "TAIWAN SEMICONDUCTOR (TSMC)", "Tecnologia / Fundição Avançada de Semicondutores", "NYSE", 8, 138.90, 137.50, 140.60, 94.30, 152.40, 1.8, 26.50, 7.80, 1.42, 37.6, 26.90, 29.80, 54.8, 40.1, 2.45, -0.18, "+38,4%", 6, 89],
-      ["AMZO34", "AMZN", "AMAZON.COM INC.", "Consumo & Nuvem / E-commerce e AWS Cloud", "NASDAQ", 10, 120.45, 119.30, 122.10, 91.20, 128.70, 3.1, 38.20, 7.95, 0.00, 0.0, 17.50, 22.40, 48.4, 8.6, 1.09, 0.18, "+52,0%", 7, 83],
-      ["AVGO34", "AVGO", "BROADCOM INC.", "Tecnologia / Semicondutores Customizados e Software", "NASDAQ", 8, 124.80, 123.10, 127.40, 82.60, 139.80, -4.6, 33.40, 9.20, 1.28, 42.8, 22.30, 28.60, 64.2, 25.4, 1.42, 0.65, "+29,5%", 8, 84],
-      ["AAPL34", "AAPL", "APPLE INC.", "Tecnologia / Ecossistema de Hardware e Serviços", "NASDAQ", 10, 135.60, 134.80, 136.90, 102.40, 141.20, 1.4, 34.10, 48.50, 0.44, 15.0, 54.20, 142.0, 46.2, 26.4, 0.98, 0.85, "+11,2%", 9, 81],
-      ["TSLA34", "TSLA", "TESLA INC.", "Automotivo / Veículos Elétricos, Energia e IA", "NASDAQ", 32, 66.59, 64.90, 68.10, 34.50, 71.20, 24.6, 91.22, 12.93, 0.00, 0.0, 11.20, 13.80, 18.4, 7.8, 1.84, -0.22, "+14,5%", 10, 64],
-      ["MELI34", "MELI", "MERCADOLIBRE INC.", "E-commerce & Fintech / América Latina", "NASDAQ", 120, 98.40, 97.10, 100.20, 75.80, 108.50, -5.2, 48.60, 21.40, 0.00, 0.0, 24.80, 39.20, 46.8, 8.9, 1.26, 0.35, "+46,2%", 11, 84],
-      ["BERK34", "BRK.B", "BERKSHIRE HATHAWAY INC.", "Holding / Seguros, Energia, Ferrovias e Investimentos", "NYSE", 35, 79.85, 79.20, 80.50, 62.40, 83.10, 2.3, 12.80, 1.62, 0.00, 0.0, 11.40, 13.10, 28.5, 19.8, 2.15, -0.15, "+18,4%", 12, 87],
-      ["JPMC34", "JPM", "JPMORGAN CHASE & CO.", "Financeiro / Banco Global e Investment Banking", "NYSE", 12, 121.30, 120.10, 122.60, 82.90, 125.40, 6.8, 13.10, 2.08, 2.05, 26.8, 14.50, 17.60, 62.0, 31.4, 1.15, 0.42, "+16,5%", 13, 86],
-      ["VISA34", "V", "VISA INC.", "Financeiro / Rede Global de Pagamentos Digitais", "NYSE", 15, 123.90, 123.00, 124.80, 99.50, 127.20, 3.9, 30.20, 15.10, 0.74, 22.3, 38.40, 49.60, 80.2, 54.8, 1.45, 0.25, "+13,8%", 14, 85],
-      ["MSCD34", "MA", "MASTERCARD INCORPORATED", "Financeiro / Tecnologia de Pagamentos Globais", "NYSE", 20, 154.20, 153.10, 155.80, 124.60, 158.90, 2.7, 36.80, 62.40, 0.52, 19.1, 56.80, 168.0, 76.5, 46.2, 1.22, 0.95, "+15,4%", 15, 84],
-      ["LLYB34", "LLY", "ELI LILLY AND COMPANY", "Saúde / Farmacêutica Inovadora e Biotecnologia", "NYSE", 45, 102.50, 100.80, 104.90, 84.20, 128.60, -9.4, 68.40, 44.20, 0.68, 46.5, 29.50, 58.40, 81.2, 22.8, 1.38, 1.10, "+48,0%", 16, 79],
-      ["UNHH34", "UNH", "UNITEDHEALTH GROUP INC.", "Saúde / Planos de Saúde e Serviços Optum", "NYSE", 35, 99.80, 98.60, 101.20, 78.40, 106.90, 4.1, 21.60, 5.40, 1.42, 30.7, 18.20, 25.40, 24.1, 5.8, 0.88, 0.45, "+9,4%", 17, 83],
-      ["WALM34", "WMT", "WALMART INC.", "Varejo / Supermercados e E-commerce Global", "NYSE", 6, 86.40, 85.70, 87.20, 54.10, 88.90, 5.6, 35.40, 8.10, 0.96, 34.0, 14.60, 22.80, 24.6, 2.9, 0.84, 0.48, "+19,2%", 18, 82],
-      ["COCA34", "KO", "THE COCA-COLA COMPANY", "Consumo Básico / Bebidas Globais", "NYSE", 6, 61.80, 61.30, 62.40, 53.20, 72.80, -3.2, 24.80, 9.80, 3.12, 77.4, 21.40, 39.50, 60.8, 23.1, 1.12, 0.92, "+6,8%", 19, 80],
-      ["EXXO34", "XOM", "EXXON MOBIL CORPORATION", "Energia / Petróleo, Gás e Refino Integrado", "NYSE", 6, 118.20, 117.10, 119.50, 94.80, 124.60, 1.9, 14.90, 2.02, 3.25, 48.4, 12.80, 14.20, 32.4, 10.2, 1.36, 0.08, "+8,5%", 20, 84],
-      ["DISB34", "DIS", "THE WALT DISNEY COMPANY", "Comunicação / Entretenimento, Parques e Streaming", "NYSE", 6, 112.90, 111.50, 114.20, 83.40, 121.80, 16.4, 22.40, 2.05, 0.85, 19.0, 8.40, 9.20, 35.8, 6.2, 0.78, 0.34, "+34,0%", 21, 78],
-      ["NFLX34", "NFLX", "NETFLIX INC.", "Comunicação / Streaming Global de Vídeo", "NASDAQ", 50, 102.60, 101.40, 103.90, 56.80, 105.40, 11.2, 44.80, 16.20, 0.00, 0.0, 26.40, 36.10, 45.2, 20.4, 1.18, 0.38, "+44,8%", 22, 81],
-      ["ORCL34", "ORCL", "ORACLE CORPORATION", "Tecnologia / Banco de Dados e Nuvem OCI", "NYSE", 10, 111.80, 110.20, 113.40, 64.50, 116.20, 7.4, 33.60, 38.40, 0.86, 28.9, 21.80, 94.0, 71.4, 21.2, 0.76, 4.20, "+18,9%", 23, 80],
-      ["QCOM34", "QCOM", "QUALCOMM INCORPORATED", "Tecnologia / Chips Móveis, Edge AI e Automotivo", "NASDAQ", 12, 81.40, 80.50, 82.90, 68.40, 112.50, -4.1, 18.20, 6.90, 2.08, 37.8, 28.40, 38.20, 56.2, 25.8, 2.54, 0.14, "+24,5%", 24, 85],
-      ["ASML34", "ASML", "ASML HOLDING N.V.", "Tecnologia / Litografia EUV para Semicondutores", "NASDAQ", 50, 80.90, 79.80, 82.40, 74.20, 132.80, -6.8, 32.40, 17.60, 0.98, 31.7, 36.20, 52.40, 51.4, 27.6, 1.48, 0.12, "+12,4%", 25, 86]
-    ];
+    let favoritesSet = new Set();
+    try {
+      const savedFavs = JSON.parse(localStorage.getItem(FAVS_KEY) || "[]");
+      if (Array.isArray(savedFavs)) favoritesSet = new Set(savedFavs);
+    } catch (_) {}
+
+    function saveFavorites() {
+      try { localStorage.setItem(FAVS_KEY, JSON.stringify([...favoritesSet])); } catch (_) {}
+    }
+
+    const VERIFIED_BDRS = [["NVDC34", "NVDA", "NVIDIA CORPORATION", "Tecnologia / Semicondutores e IA", "NASDAQ", 48, 18.15, 18.15, 19.46, 14.45, 21.87, -20.1, 18.67, 15.73, 0.22, 3.8, 71.95, 84.23, 74.7, 58.3, 4.59, -0.29, "+105,0%", "310 Mi", "96,2%", "R$ 385 Bi", "NASDAQ", 2, 1, 91], ["GOGL34", "GOOGL", "ALPHABET INC.", "Tecnologia / Busca, Ads e Cloud", "NASDAQ", 8, 136.39, 135.4, 138.1, 108.2, 145.9, -2.1, 21.4, 6.75, 0.48, 10.3, 28.4, 32.1, 58.2, 27.8, 1.98, -0.24, "+26,8%", "84 Mi", "88,5%", "R$ 1.890 Bi", "NASDAQ", 3, 2, 89], ["TSMC34", "TSM", "TAIWAN SEMICONDUCTOR (TSMC)", "Tecnologia / Fundição Semicondutores", "NYSE", 8, 138.9, 137.5, 140.6, 94.3, 152.4, 1.8, 26.5, 7.8, 1.42, 37.6, 26.9, 29.8, 54.8, 40.1, 2.45, -0.18, "+38,4%", "42 Mi", "93,6%", "R$ 740 Bi", "NYSE", 4, 3, 89], ["M1TA34", "META", "META PLATFORMS INC.", "Tecnologia / Redes Sociais e Ads", "NASDAQ", 20, 168.4, 166.8, 170.2, 118.4, 179.9, 4.2, 24.9, 8.9, 0.35, 8.7, 32.1, 35.8, 81.5, 34.2, 2.75, -0.31, "+42,5%", "76 Mi", "86,4%", "R$ 960 Bi", "NASDAQ", 1, 4, 88], ["BERK34", "BRK.B", "BERKSHIRE HATHAWAY INC.", "Holding / Seguros, Energia e Invest.", "NYSE", 35, 79.85, 79.2, 80.5, 62.4, 83.1, 2.3, 12.8, 1.62, 0.0, 0.0, 11.4, 13.1, 28.5, 19.8, 2.15, -0.15, "+18,4%", "35 Mi", "84,0%", "R$ 3.650 Bi", "NYSE", 8, 5, 87], ["JPMC34", "JPM", "JPMORGAN CHASE & CO.", "Financeiro / Banco Global", "NYSE", 12, 121.3, 120.1, 122.6, 82.9, 125.4, 6.8, 13.1, 2.08, 2.05, 26.8, 14.5, 17.6, 62.0, 31.4, 1.15, 0.42, "+16,5%", "29 Mi", "99,1%", "R$ 2.040 Bi", "NYSE", 7, 6, 86], ["ASML34", "ASML", "ASML HOLDING N.V.", "Tecnologia / Litografia EUV", "NASDAQ", 50, 80.9, 79.8, 82.4, 74.2, 132.8, -6.8, 32.4, 17.6, 0.98, 31.7, 36.2, 52.4, 51.4, 27.6, 1.48, 0.12, "+12,4%", "18 Mi", "99,4%", "R$ 105 Bi", "NASDAQ", 5, 7, 86], ["MSFT34", "MSFT", "MICROSOFT CORPORATION", "Tecnologia / Software e Nuvem Azure", "NASDAQ", 20, 123.38, 122.9, 124.85, 112.1, 139.5, -3.4, 31.8, 11.4, 0.78, 24.8, 31.2, 36.5, 69.8, 35.6, 1.3, -0.12, "+14,2%", "95 Mi", "98,5%", "R$ 1.720 Bi", "NASDAQ", 6, 8, 85], ["VISA34", "V", "VISA INC.", "Financeiro / Rede de Pagamentos", "NYSE", 15, 123.9, 123.0, 124.8, 99.5, 127.2, 3.9, 30.2, 15.1, 0.74, 22.3, 38.4, 49.6, 80.2, 54.8, 1.45, 0.25, "+13,8%", "24 Mi", "99,6%", "R$ 230 Bi", "NYSE", 9, 9, 85], ["QCOM34", "QCOM", "QUALCOMM INCORPORATED", "Tecnologia / Chips Móveis e Edge AI", "NASDAQ", 12, 81.4, 80.5, 82.9, 68.4, 112.5, -4.1, 18.2, 6.9, 2.08, 37.8, 28.4, 38.2, 56.2, 25.8, 2.54, 0.14, "+24,5%", "21 Mi", "99,7%", "R$ 155 Bi", "NASDAQ", 11, 10, 85], ["AVGO34", "AVGO", "BROADCOM INC.", "Tecnologia / Semicondutores e Software", "NASDAQ", 8, 124.8, 123.1, 127.4, 82.6, 139.8, -4.6, 33.4, 9.2, 1.28, 42.8, 22.3, 28.6, 64.2, 25.4, 1.42, 0.65, "+29,5%", "38 Mi", "98,1%", "R$ 410 Bi", "NASDAQ", 12, 11, 84], ["MELI34", "MELI", "MERCADOLIBRE INC.", "Consumo / E-commerce e Fintech", "NASDAQ", 120, 98.4, 97.1, 100.2, 75.8, 108.5, -5.2, 48.6, 21.4, 0.0, 0.0, 24.8, 39.2, 46.8, 8.9, 1.26, 0.35, "+46,2%", "52 Mi", "92,4%", "R$ 26 Bi", "NASDAQ", 15, 12, 84], ["MSCD34", "MA", "MASTERCARD INCORPORATED", "Financeiro / Tecnologia de Pagamentos", "NYSE", 20, 154.2, 153.1, 155.8, 124.6, 158.9, 2.7, 36.8, 62.4, 0.52, 19.1, 56.8, 168.0, 76.5, 46.2, 1.22, 0.95, "+15,4%", "19 Mi", "89,3%", "R$ 45 Bi", "NYSE", 10, 13, 84], ["EXXO34", "XOM", "EXXON MOBIL CORPORATION", "Energia / Petróleo e Gás Integrado", "NYSE", 6, 118.2, 117.1, 119.5, 94.8, 124.6, 1.9, 14.9, 2.02, 3.25, 48.4, 12.8, 14.2, 32.4, 10.2, 1.36, 0.08, "+8,5%", "31 Mi", "99,8%", "R$ 1.560 Bi", "NYSE", 14, 14, 84], ["AMZO34", "AMZN", "AMAZON.COM INC.", "Consumo & Cloud / E-commerce e AWS", "NASDAQ", 10, 120.45, 119.3, 122.1, 91.2, 128.7, 3.1, 38.2, 7.95, 0.0, 0.0, 17.5, 22.4, 48.4, 8.6, 1.09, 0.18, "+52,0%", "112 Mi", "90,8%", "R$ 1.580 Bi", "NASDAQ", 13, 15, 83], ["UNHH34", "UNH", "UNITEDHEALTH GROUP INC.", "Saúde / Planos de Saúde e Optum", "NYSE", 35, 99.8, 98.6, 101.2, 78.4, 106.9, 4.1, 21.6, 5.4, 1.42, 30.7, 18.2, 25.4, 24.1, 5.8, 0.88, 0.45, "+9,4%", "16 Mi", "99,5%", "R$ 575 Bi", "NYSE", 16, 16, 83], ["MUTC34", "MU", "MICRON TECHNOLOGY INC.", "Tecnologia / Memórias DRAM e HBM", "NASDAQ", 6, 97.6, 96.2, 99.4, 74.5, 148.2, -8.5, 14.2, 2.35, 0.46, 6.5, 14.8, 16.9, 36.4, 18.2, 2.6, 0.12, "+68,0%", "48 Mi", "99,3%", "R$ 275 Bi", "NASDAQ", 18, 17, 82], ["WALM34", "WMT", "WALMART INC.", "Varejo / Supermercados e E-commerce", "NYSE", 6, 86.4, 85.7, 87.2, 54.1, 88.9, 5.6, 35.4, 8.1, 0.96, 34.0, 14.6, 22.8, 24.6, 2.9, 0.84, 0.48, "+19,2%", "22 Mi", "54,2%", "R$ 520 Bi", "NYSE", 17, 18, 82], ["AAPL34", "AAPL", "APPLE INC.", "Tecnologia / Hardware e Serviços", "NASDAQ", 10, 135.6, 134.8, 136.9, 102.4, 141.2, 1.4, 34.1, 48.5, 0.44, 15.0, 54.2, 142.0, 46.2, 26.4, 0.98, 0.85, "+11,2%", "145 Mi", "99,8%", "R$ 390 Bi", "NASDAQ", 19, 19, 81], ["NFLX34", "NFLX", "NETFLIX INC.", "Comunicação / Streaming Global", "NASDAQ", 50, 102.6, 101.4, 103.9, 56.8, 105.4, 11.2, 44.8, 16.2, 0.0, 0.0, 26.4, 36.1, 45.2, 20.4, 1.18, 0.38, "+44,8%", "27 Mi", "98,9%", "R$ 142 Bi", "NASDAQ", 20, 20, 81], ["COCA34", "KO", "THE COCA-COLA COMPANY", "Consumo Básico / Bebidas Globais", "NYSE", 6, 61.8, 61.3, 62.4, 53.2, 72.8, -3.2, 24.8, 9.8, 3.12, 77.4, 21.4, 39.5, 60.8, 23.1, 1.12, 0.92, "+6,8%", "34 Mi", "99,2%", "R$ 162 Bi", "NYSE", 21, 21, 80], ["ORCL34", "ORCL", "ORACLE CORPORATION", "Tecnologia / Banco de Dados e Nuvem", "NYSE", 10, 111.8, 110.2, 113.4, 64.5, 116.2, 7.4, 33.6, 38.4, 0.86, 28.9, 21.8, 94.0, 71.4, 21.2, 0.76, 4.2, "+18,9%", "28 Mi", "58,4%", "R$ 74 Bi", "NYSE", 24, 22, 80], ["JNJB34", "JNJ", "JOHNSON & JOHNSON", "Saúde / Farmacêutica e MedTech", "NYSE", 15, 63.4, 62.9, 64.1, 56.8, 69.5, 1.1, 16.4, 5.2, 3.05, 50.0, 19.6, 31.2, 69.1, 18.4, 1.18, 0.22, "+11,5%", "25 Mi", "99,8%", "R$ 425 Bi", "NYSE", 22, 23, 80], ["PGCO34", "PG", "PROCTER & GAMBLE COMPANY", "Consumo Básico / Higiene e Limpeza", "NYSE", 15, 68.2, 67.6, 68.9, 58.4, 72.1, 0.8, 26.2, 7.9, 2.38, 62.3, 20.4, 30.8, 51.4, 18.2, 0.78, 0.45, "+7,4%", "19 Mi", "99,8%", "R$ 305 Bi", "NYSE", 23, 24, 80], ["LLYB34", "LLY", "ELI LILLY AND COMPANY", "Saúde / Farmacêutica Inovadora", "NYSE", 45, 102.5, 100.8, 104.9, 84.2, 128.6, -9.4, 68.4, 44.2, 0.68, 46.5, 29.5, 58.4, 81.2, 22.8, 1.38, 1.1, "+48,0%", "17 Mi", "89,5%", "R$ 86 Bi", "NYSE", 25, 25, 79], ["ADBE34", "ADBE", "ADOBE INC.", "Tecnologia / Software Criativo e Nuvem", "NASDAQ", 35, 84.2, 83.1, 85.6, 72.4, 104.8, -4.8, 36.5, 14.2, 0.0, 0.0, 28.4, 38.9, 88.4, 26.8, 1.14, 0.12, "+15,2%", "14 Mi", "99,6%", "R$ 92 Bi", "NASDAQ", 26, 26, 79], ["ACNB34", "ACN", "ACCENTURE PLC", "Tecnologia / Consultoria e Serviços TI", "NYSE", 25, 83.5, 82.8, 84.4, 68.9, 91.2, 2.4, 28.4, 7.6, 1.52, 43.2, 24.6, 26.8, 32.6, 11.4, 1.16, -0.15, "+8,1%", "11 Mi", "99,7%", "R$ 172 Bi", "NYSE", 27, 27, 79], ["AMGN34", "AMGN", "AMGEN INC.", "Saúde / Biotecnologia", "NASDAQ", 25, 72.4, 71.8, 73.2, 61.5, 82.4, -1.9, 22.8, 24.5, 3.1, 70.6, 13.8, 62.4, 71.2, 16.5, 1.42, 6.8, "+12,0%", "10 Mi", "99,6%", "R$ 38 Bi", "NASDAQ", 34, 28, 78], ["ABBV34", "ABBV", "ABBVIE INC.", "Saúde / Biofarmacêutica", "NYSE", 15, 74.8, 74.1, 75.6, 62.1, 81.9, 3.2, 24.5, 46.2, 3.35, 82.0, 15.2, 78.4, 70.4, 14.8, 0.82, 7.4, "+9,8%", "15 Mi", "99,7%", "R$ 44 Bi", "NYSE", 35, 29, 78], ["CSCO34", "CSCO", "CISCO SYSTEMS INC.", "Tecnologia / Redes e Cibersegurança", "NASDAQ", 5, 68.9, 68.3, 69.5, 54.2, 71.8, 4.5, 19.4, 4.9, 2.78, 53.9, 17.8, 25.2, 65.4, 19.8, 1.05, 0.32, "+6,2%", "22 Mi", "99,8%", "R$ 268 Bi", "NASDAQ", 28, 30, 78], ["CRM334", "CRM", "SALESFORCE INC.", "Tecnologia / CRM em Nuvem", "NYSE", 25, 76.4, 75.5, 77.8, 56.4, 84.2, 5.1, 41.2, 4.85, 0.54, 22.2, 10.8, 11.8, 76.2, 16.4, 1.08, -0.05, "+32,0%", "18 Mi", "97,2%", "R$ 345 Bi", "NYSE", 31, 31, 78], ["TXSA34", "TXN", "TEXAS INSTRUMENTS INC.", "Tecnologia / Semicondutores Analógicos", "NASDAQ", 15, 78.6, 77.9, 79.4, 64.8, 86.5, -1.4, 34.8, 10.6, 2.75, 95.7, 21.2, 30.4, 58.6, 31.2, 4.15, 0.38, "-8,4%", "13 Mi", "99,6%", "R$ 102 Bi", "NASDAQ", 29, 32, 78], ["DISB34", "DIS", "THE WALT DISNEY COMPANY", "Comunicação / Entretenimento e Parques", "NYSE", 6, 112.9, 111.5, 114.2, 83.4, 121.8, 16.4, 22.4, 2.05, 0.85, 19.0, 8.4, 9.2, 35.8, 6.2, 0.78, 0.34, "+34,0%", "39 Mi", "99,8%", "R$ 610 Bi", "NYSE", 38, 33, 78], ["HOME34", "HD", "THE HOME DEPOT INC.", "Varejo / Materiais de Construção", "NYSE", 30, 79.2, 78.5, 80.1, 64.2, 84.6, 2.8, 26.8, 68.5, 2.24, 60.0, 24.8, 185.0, 33.4, 9.6, 1.12, 8.2, "+4,1%", "16 Mi", "99,8%", "R$ 32 Bi", "NYSE", 30, 34, 78], ["PEP334", "PEP", "PEPSICO INC.", "Consumo Básico / Bebidas e Alimentos", "NASDAQ", 15, 64.5, 63.9, 65.2, 58.1, 73.4, -2.5, 22.4, 11.2, 3.28, 73.4, 18.6, 48.2, 54.8, 10.4, 0.86, 1.85, "+6,9%", "17 Mi", "99,7%", "R$ 114 Bi", "NASDAQ", 32, 35, 78], ["TMOS34", "TMO", "THERMO FISHER SCIENTIFIC", "Saúde / Equipamentos Científicos", "NYSE", 45, 71.8, 71.1, 72.6, 62.4, 81.5, -1.8, 31.4, 4.35, 0.28, 8.8, 10.4, 13.8, 41.2, 14.8, 1.54, 0.56, "+5,6%", "9 Mi", "99,7%", "R$ 284 Bi", "NYSE", 36, 36, 77], ["ABTT34", "ABT", "ABBOTT LABORATORIES", "Saúde / Diagnósticos e Dispositivos", "NYSE", 10, 69.4, 68.8, 70.1, 58.9, 73.8, 1.9, 25.6, 4.95, 1.88, 48.1, 13.6, 19.2, 55.4, 14.2, 1.62, 0.18, "+8,2%", "14 Mi", "99,3%", "R$ 236 Bi", "NYSE", 33, 37, 77], ["DHER34", "DHR", "DANAHER CORPORATION", "Saúde / Ciências da Vida e Diagnóstico", "NYSE", 20, 73.2, 72.5, 74.1, 61.8, 84.9, -2.2, 34.2, 3.45, 0.44, 15.0, 8.9, 10.1, 59.6, 16.8, 1.68, 0.24, "+4,5%", "11 Mi", "88,6%", "R$ 308 Bi", "NYSE", 39, 38, 77], ["INTU34", "INTU", "INTUIT INC.", "Tecnologia / Software Financeiro e Fiscal", "NASDAQ", 50, 75.8, 74.9, 76.9, 64.2, 83.4, 1.6, 48.5, 9.6, 0.62, 30.0, 16.4, 19.8, 79.4, 18.2, 1.32, 0.16, "+16,4%", "10 Mi", "97,3%", "R$ 110 Bi", "NASDAQ", 37, 39, 77], ["AMAT34", "AMAT", "APPLIED MATERIALS INC.", "Tecnologia / Equipamentos Semicondutores", "NASDAQ", 15, 74.6, 73.5, 76.1, 62.8, 98.4, -5.4, 21.8, 7.8, 0.84, 18.3, 31.4, 38.6, 47.6, 26.4, 2.52, -0.08, "+14,8%", "21 Mi", "99,5%", "R$ 114 Bi", "NASDAQ", 40, 40, 77], ["LRCX34", "LRCX", "LAM RESEARCH CORPORATION", "Tecnologia / Equipamentos Wafer Fab", "NASDAQ", 10, 46.8, 46.1, 47.9, 39.5, 65.4, -6.1, 22.6, 11.4, 1.15, 26.0, 36.8, 48.9, 47.8, 25.6, 2.68, -0.14, "+12,6%", "19 Mi", "99,6%", "R$ 52 Bi", "NASDAQ", 41, 41, 77], ["KLAC34", "KLAC", "KLA CORPORATION", "Tecnologia / Controle de Processo Chips", "NASDAQ", 60, 68.4, 67.5, 69.8, 56.2, 88.9, -4.9, 27.4, 26.8, 0.92, 25.2, 42.6, 86.4, 60.2, 28.4, 2.44, 0.62, "+11,8%", "8 Mi", "99,7%", "R$ 22 Bi", "NASDAQ", 42, 42, 77], ["CATP34", "CAT", "CATERPILLAR INC.", "Indústria / Máquinas Pesadas e Mineração", "NYSE", 30, 77.4, 76.6, 78.5, 56.8, 81.2, 4.3, 17.8, 9.6, 1.48, 26.3, 24.2, 54.8, 36.8, 16.4, 1.38, 1.45, "+18,2%", "13 Mi", "99,6%", "R$ 118 Bi", "NYSE", 43, 43, 76], ["DEEC34", "DE", "DEERE & COMPANY", "Indústria / Máquinas Agrícolas", "NYSE", 35, 72.1, 71.4, 73.0, 58.2, 76.4, 3.1, 16.4, 5.2, 1.42, 23.2, 14.8, 32.4, 32.4, 13.8, 2.12, 2.15, "+6,4%", "9 Mi", "99,5%", "R$ 136 Bi", "NYSE", 45, 44, 76], ["HONB34", "HON", "HONEYWELL INTERNATIONAL", "Indústria / Automação e Aeroespacial", "NASDAQ", 18, 71.5, 70.9, 72.2, 61.4, 75.8, 1.8, 23.4, 7.8, 2.08, 48.6, 17.4, 32.8, 37.8, 15.2, 1.28, 0.85, "+5,8%", "11 Mi", "99,7%", "R$ 108 Bi", "NASDAQ", 46, 45, 76], ["GEOO34", "GE", "GE AEROSPACE", "Indústria / Motores Aeronáuticos e Defesa", "NYSE", 15, 73.8, 72.9, 74.9, 46.2, 77.4, 6.4, 34.2, 9.8, 0.64, 21.8, 18.6, 28.4, 31.2, 14.6, 1.14, 0.42, "+48,5%", "17 Mi", "99,7%", "R$ 116 Bi", "NYSE", 44, 46, 76], ["LMTB34", "LMT", "LOCKHEED MARTIN CORP.", "Indústria / Defesa e Aeroespacial", "NYSE", 40, 78.4, 77.8, 79.2, 63.5, 88.6, -1.2, 19.6, 18.4, 2.42, 47.4, 26.8, 88.4, 12.8, 9.4, 1.18, 2.35, "+4,2%", "8 Mi", "99,7%", "R$ 42 Bi", "NYSE", 47, 47, 76], ["UNPAC34", "UNP", "UNION PACIFIC CORPORATION", "Transporte / Ferrovias de Carga", "NYSE", 20, 71.2, 70.6, 71.9, 63.4, 76.8, 0.9, 22.1, 8.9, 2.24, 49.5, 16.8, 40.2, 54.6, 27.8, 0.84, 1.82, "+6,1%", "9 Mi", "99,7%", "R$ 98 Bi", "NYSE", 48, 48, 76], ["BACO34", "BAC", "BANK OF AMERICA CORP.", "Financeiro / Banco Comercial e Invest.", "NYSE", 4, 65.4, 64.8, 66.2, 46.5, 68.9, 5.8, 13.4, 1.24, 2.35, 31.4, 9.4, 10.2, 58.4, 26.2, 1.1, 0.68, "+9,4%", "44 Mi", "86,8%", "R$ 1.740 Bi", "NYSE", 49, 49, 75], ["WFCO34", "WFC", "WELLS FARGO & COMPANY", "Financeiro / Banco Varejo e Comercial", "NYSE", 6, 68.9, 68.1, 69.8, 48.2, 71.4, 7.2, 13.8, 1.38, 2.28, 31.4, 9.8, 10.8, 56.8, 24.4, 1.12, 0.62, "+11,2%", "28 Mi", "99,7%", "R$ 1.080 Bi", "NYSE", 50, 50, 75], ["GSGI34", "GS", "GOLDMAN SACHS GROUP INC.", "Financeiro / Investment Banking", "NYSE", 45, 74.2, 73.4, 75.3, 51.8, 78.6, 8.4, 15.6, 1.58, 2.08, 32.4, 10.2, 11.4, 61.2, 23.8, 1.18, 1.45, "+28,4%", "12 Mi", "99,4%", "R$ 720 Bi", "NYSE", 51, 51, 75], ["MSBR34", "MS", "MORGAN STANLEY", "Financeiro / Gestão de Patrimônio", "NYSE", 10, 74.8, 74.0, 75.9, 52.4, 78.2, 6.9, 17.2, 2.15, 2.95, 50.7, 11.4, 12.8, 59.8, 21.4, 1.15, 1.32, "+24,6%", "15 Mi", "77,8%", "R$ 615 Bi", "NYSE", 52, 52, 75], ["BLK134", "BLK", "BLACKROCK INC.", "Financeiro / Gestão Global de Ativos", "NYSE", 80, 75.6, 74.9, 76.5, 58.4, 79.8, 4.7, 23.8, 3.65, 2.02, 48.0, 14.2, 15.4, 49.6, 31.8, 1.48, 0.14, "+16,8%", "7 Mi", "98,4%", "R$ 245 Bi", "NYSE", 53, 53, 75], ["AXPB34", "AXP", "AMERICAN EXPRESS COMPANY", "Financeiro / Cartões e Pagamentos", "NYSE", 25, 71.4, 70.6, 72.5, 48.9, 74.8, 6.1, 20.8, 6.85, 0.98, 20.3, 18.4, 34.2, 64.2, 16.8, 1.24, 1.15, "+19,4%", "11 Mi", "78,6%", "R$ 178 Bi", "NYSE", 54, 54, 75], ["SCHW34", "SCHW", "CHARLES SCHWAB CORP.", "Financeiro / Corretora e Custódia", "NYSE", 6, 76.8, 75.9, 77.9, 58.2, 81.4, 5.4, 24.6, 3.42, 1.28, 31.4, 12.4, 14.2, 58.4, 28.6, 1.16, 0.42, "+12,8%", "16 Mi", "93,4%", "R$ 262 Bi", "NYSE", 55, 55, 74], ["CTGP34", "C", "CITIGROUP INC.", "Financeiro / Banco Global", "NYSE", 6, 68.2, 67.4, 69.1, 49.8, 71.8, 6.2, 11.4, 0.68, 3.18, 36.2, 6.4, 6.8, 54.2, 14.8, 1.08, 0.78, "+14,2%", "26 Mi", "99,7%", "R$ 1.240 Bi", "NYSE", 64, 56, 74], ["SPGI34", "SPGI", "S&P GLOBAL INC.", "Financeiro / Ratings e Índices", "NYSE", 40, 75.4, 74.8, 76.2, 61.2, 79.4, 2.1, 38.6, 4.65, 0.74, 28.5, 11.2, 12.1, 68.4, 26.8, 1.04, 0.28, "+21,4%", "6 Mi", "99,7%", "R$ 212 Bi", "NYSE", 56, 57, 74], ["MCO134", "MCO", "MOODY'S CORPORATION", "Financeiro / Classificação de Risco", "NYSE", 40, 71.8, 71.1, 72.6, 56.4, 75.9, 2.8, 41.2, 22.8, 0.72, 29.6, 26.4, 56.8, 72.6, 28.4, 1.42, 1.65, "+24,8%", "6 Mi", "86,4%", "R$ 22 Bi", "NYSE", 57, 58, 74], ["COWC34", "COST", "COSTCO WHOLESALE CORP.", "Varejo / Clube de Compras", "NASDAQ", 80, 70.4, 69.8, 71.2, 54.6, 74.8, 3.4, 52.8, 16.4, 0.52, 27.4, 24.6, 31.8, 12.6, 2.9, 1.02, -0.18, "+14,6%", "12 Mi", "99,7%", "R$ 144 Bi", "NASDAQ", 58, 59, 74], ["MCDC34", "MCD", "MCDONALD'S CORPORATION", "Consumo / Restaurantes Globais", "NYSE", 25, 69.8, 69.2, 70.5, 61.2, 74.6, 1.2, 24.8, 48.2, 2.38, 59.0, 21.4, 162.0, 56.8, 32.4, 1.18, 6.4, "+4,8%", "11 Mi", "99,7%", "R$ 24 Bi", "NYSE", 59, 60, 74], ["SBUB34", "SBUX", "STARBUCKS CORPORATION", "Consumo / Cafeterias Globais", "NASDAQ", 8, 72.4, 71.6, 73.5, 56.8, 78.9, 2.9, 27.6, 42.4, 2.46, 67.8, 22.8, 148.0, 27.4, 10.8, 0.82, 5.2, "-3,4%", "18 Mi", "97,8%", "R$ 16 Bi", "NASDAQ", 62, 61, 73], ["NIKE34", "NKE", "NIKE INC.", "Consumo / Artigos Esportivos", "NYSE", 6, 76.2, 75.4, 77.4, 68.4, 96.8, -4.2, 24.4, 8.2, 1.92, 46.8, 22.6, 34.2, 44.6, 10.8, 2.42, 0.12, "-6,8%", "24 Mi", "83,4%", "R$ 86 Bi", "NYSE", 63, 62, 73], ["LOWC34", "LOW", "LOWE'S COMPANIES INC.", "Varejo / Melhorias Residenciais", "NYSE", 20, 77.4, 76.8, 78.2, 62.4, 82.6, 2.6, 21.4, 38.4, 1.78, 38.0, 26.8, 145.0, 33.2, 8.4, 1.04, 5.8, "-2,8%", "9 Mi", "99,7%", "R$ 18 Bi", "NYSE", 60, 63, 73], ["TGTB34", "TGT", "TARGET CORPORATION", "Varejo / Lojas de Departamento", "NYSE", 12, 71.8, 70.9, 72.9, 61.4, 86.2, -3.8, 15.4, 4.65, 3.18, 48.9, 14.8, 30.4, 28.2, 4.2, 0.94, 0.78, "+8,4%", "13 Mi", "99,6%", "R$ 86 Bi", "NYSE", 61, 64, 73], ["BKNG34", "BKNG", "BOOKING HOLDINGS INC.", "Consumo / Viagens e Hotelaria Online", "NASDAQ", 350, 78.9, 78.1, 79.8, 58.4, 82.4, 4.8, 29.4, 44.2, 0.78, 22.9, 36.4, 148.0, 85.4, 22.8, 1.38, 1.95, "+26,4%", "8 Mi", "99,6%", "R$ 24 Bi", "NASDAQ", 65, 65, 73], ["AIRB34", "ABNB", "AIRBNB INC.", "Consumo / Plataforma de Hospedagem", "NASDAQ", 10, 81.4, 80.5, 82.6, 68.2, 96.4, 1.9, 32.8, 10.4, 0.0, 0.0, 24.6, 32.4, 82.8, 24.2, 1.48, -0.45, "+14,2%", "16 Mi", "72,4%", "R$ 48 Bi", "NASDAQ", 66, 66, 73], ["U1BE34", "UBER", "UBER TECHNOLOGIES INC.", "Tecnologia / Mobilidade e Delivery", "NYSE", 6, 74.8, 73.9, 76.1, 54.8, 84.2, 3.6, 34.6, 11.2, 0.0, 0.0, 16.4, 31.8, 39.4, 9.8, 1.18, 0.24, "+62,0%", "36 Mi", "96,4%", "R$ 88 Bi", "NYSE", 67, 67, 73], ["PYPL34", "PYPL", "PAYPAL HOLDINGS INC.", "Financeiro / Pagamentos Digitais", "NASDAQ", 6, 82.4, 81.2, 83.9, 56.4, 88.2, 7.8, 19.8, 4.25, 0.0, 0.0, 15.8, 21.6, 45.6, 14.4, 1.28, 0.08, "+18,6%", "28 Mi", "99,6%", "R$ 124 Bi", "NASDAQ", 68, 68, 72], ["SHOP34", "SHOP", "SHOPIFY INC.", "Tecnologia / Infraestrutura E-commerce", "NYSE", 8, 79.8, 78.6, 81.4, 48.2, 86.5, 9.4, 68.4, 12.6, 0.0, 0.0, 14.2, 18.4, 51.2, 16.8, 3.64, -0.35, "+74,0%", "24 Mi", "93,8%", "R$ 62 Bi", "NYSE", 72, 69, 72], ["SNOW34", "SNOW", "SNOWFLAKE INC.", "Tecnologia / Data Cloud e IA", "NYSE", 12, 74.2, 73.1, 75.8, 54.6, 98.4, 4.2, 95.4, 14.8, 0.0, 0.0, 8.4, 11.2, 67.4, 6.4, 1.86, -0.42, "+22,0%", "19 Mi", "96,2%", "R$ 32 Bi", "NYSE", 78, 70, 72], ["PLTR34", "PLTR", "PALANTIR TECHNOLOGIES", "Tecnologia / Software de IA e Defesa", "NYSE", 4, 88.4, 86.2, 91.5, 24.8, 94.2, 18.4, 112.0, 24.6, 0.0, 0.0, 14.8, 16.4, 81.2, 18.6, 5.42, -0.68, "+125,0%", "92 Mi", "88,4%", "R$ 28 Bi", "NYSE", 74, 71, 72], ["CRWD34", "CRWD", "CROWDSTRIKE HOLDINGS", "Tecnologia / Cibersegurança", "NASDAQ", 25, 81.6, 80.2, 83.4, 52.4, 94.8, 6.2, 84.2, 26.4, 0.0, 0.0, 12.6, 15.8, 75.4, 8.2, 1.72, -0.54, "+64,0%", "15 Mi", "95,8%", "R$ 19 Bi", "NASDAQ", 75, 72, 72], ["P2LT34", "PANW", "PALO ALTO NETWORKS", "Tecnologia / Segurança de Redes", "NASDAQ", 30, 76.4, 75.5, 77.8, 54.2, 82.4, 3.8, 54.6, 22.8, 0.0, 0.0, 18.4, 28.6, 74.2, 16.4, 1.12, -0.28, "+42,0%", "14 Mi", "98,4%", "R$ 34 Bi", "NASDAQ", 71, 73, 72], ["SNPS34", "SNPS", "SYNOPSYS INC.", "Tecnologia / Software EDA para Chips", "NASDAQ", 40, 78.9, 78.0, 80.2, 64.8, 92.4, -2.4, 48.2, 9.8, 0.0, 0.0, 16.8, 20.4, 80.4, 22.6, 1.94, -0.22, "+28,4%", "7 Mi", "99,5%", "R$ 54 Bi", "NASDAQ", 69, 74, 72], ["CDNS34", "CDNS", "CADENCE DESIGN SYSTEMS", "Tecnologia / Design Eletrônico EDA", "NASDAQ", 25, 74.6, 73.8, 75.9, 61.2, 84.6, -1.8, 52.4, 18.6, 0.0, 0.0, 24.8, 31.2, 88.6, 24.8, 1.64, -0.14, "+19,8%", "8 Mi", "99,6%", "R$ 26 Bi", "NASDAQ", 70, 75, 72], ["A1MD34", "AMD", "ADVANCED MICRO DEVICES", "Tecnologia / Processadores e GPUs IA", "NASDAQ", 12, 74.8, 73.6, 76.4, 62.4, 108.5, -6.4, 46.8, 4.45, 0.0, 0.0, 8.6, 9.4, 49.2, 8.8, 2.48, -0.06, "+54,0%", "68 Mi", "99,2%", "R$ 342 Bi", "NASDAQ", 76, 76, 71], ["ITLC34", "INTC", "INTEL CORPORATION", "Tecnologia / Semicondutores e Foundry", "NASDAQ", 2, 68.4, 67.2, 70.1, 54.8, 142.6, -8.2, 38.4, 0.94, 0.0, 0.0, 2.4, 2.6, 38.4, 1.8, 1.54, 0.24, "-42,0%", "74 Mi", "99,8%", "R$ 612 Bi", "NASDAQ", 92, 77, 70], ["IBMB34", "IBM", "INTL. BUSINESS MACHINES", "Tecnologia / Nuvem Híbrida e IA Corp.", "NYSE", 18, 72.6, 71.9, 73.4, 52.4, 76.8, 4.1, 24.2, 8.4, 3.04, 73.5, 14.6, 34.8, 56.2, 13.4, 1.04, 1.68, "+11,4%", "12 Mi", "99,7%", "R$ 146 Bi", "NYSE", 73, 78, 71], ["CHVX34", "CVX", "CHEVRON CORPORATION", "Energia / Petróleo, Gás e Químicos", "NYSE", 12, 76.4, 75.8, 77.2, 68.4, 84.2, 1.4, 15.8, 1.76, 4.28, 67.6, 10.4, 11.2, 38.6, 9.4, 1.24, 0.12, "-12,4%", "19 Mi", "99,7%", "R$ 940 Bi", "NYSE", 77, 79, 71], ["COPH34", "COP", "CONOCOPHILLIPS", "Energia / Exploração e Produção E&P", "NYSE", 8, 81.2, 80.4, 82.4, 72.1, 96.8, -1.6, 13.4, 2.58, 2.84, 38.0, 15.6, 19.4, 48.2, 16.8, 1.36, 0.22, "-6,2%", "14 Mi", "99,8%", "R$ 304 Bi", "NYSE", 79, 80, 71], ["SLBG34", "SLB", "SLB (SCHLUMBERGER)", "Energia / Tecnologia e Serviços O&G", "NYSE", 4, 64.8, 64.1, 65.9, 56.2, 82.4, -2.8, 14.6, 2.94, 2.48, 36.2, 15.4, 20.8, 20.6, 12.4, 1.32, 0.44, "+9,8%", "21 Mi", "99,5%", "R$ 126 Bi", "NYSE", 80, 81, 71], ["NEXT34", "NEE", "NEXTERA ENERGY INC.", "Utilidade Pública / Energia Renovável", "NYSE", 6, 76.8, 76.0, 77.9, 56.4, 84.6, 2.4, 22.8, 3.12, 2.68, 61.1, 8.4, 14.2, 54.8, 26.4, 0.68, 1.42, "+12,4%", "16 Mi", "99,7%", "R$ 292 Bi", "NYSE", 81, 82, 71], ["DUKB34", "DUK", "DUKE ENERGY CORPORATION", "Utilidade Pública / Energia Elétrica", "NYSE", 10, 68.4, 67.9, 69.1, 56.8, 72.4, 1.2, 19.4, 1.82, 3.64, 70.6, 6.8, 9.4, 48.2, 14.8, 0.72, 1.54, "+8,6%", "9 Mi", "99,8%", "R$ 296 Bi", "NYSE", 82, 83, 71], ["SOUB34", "SO", "THE SOUTHERN COMPANY", "Utilidade Pública / Geração e Transm.", "NYSE", 8, 66.2, 65.7, 66.9, 52.4, 69.8, 1.8, 21.2, 2.84, 3.28, 69.5, 7.6, 13.4, 46.8, 15.6, 0.76, 1.78, "+11,2%", "10 Mi", "99,8%", "R$ 198 Bi", "NYSE", 83, 84, 71], ["VERZ34", "VZ", "VERIZON COMMUNICATIONS", "Telecomunicações / Redes 5G e Fibra", "NYSE", 4, 63.4, 62.9, 64.0, 54.8, 68.2, 0.6, 10.4, 1.84, 6.24, 64.8, 8.8, 18.2, 59.8, 11.4, 0.78, 1.48, "+3,4%", "24 Mi", "99,8%", "R$ 578 Bi", "NYSE", 84, 85, 71], ["ATTB34", "T", "AT&T INC.", "Telecomunicações / Conectividade", "NYSE", 2, 66.8, 66.2, 67.5, 46.8, 69.4, 3.4, 11.8, 1.42, 4.92, 58.0, 7.4, 12.1, 58.6, 10.8, 0.68, 1.18, "+6,2%", "42 Mi", "99,8%", "R$ 645 Bi", "NYSE", 85, 86, 71], ["TMUS34", "TMUS", "T-MOBILE US INC.", "Telecomunicações / Operadora 5G", "NASDAQ", 18, 74.2, 73.5, 75.1, 52.8, 77.6, 4.6, 24.8, 4.12, 1.42, 35.2, 10.2, 16.8, 62.4, 13.2, 0.94, 1.12, "+22,4%", "11 Mi", "48,6%", "R$ 372 Bi", "NASDAQ", 86, 87, 71], ["CMCS34", "CMCSA", "COMCAST CORPORATION", "Comunicação / Banda Larga e Mídia", "NASDAQ", 4, 62.4, 61.8, 63.1, 54.2, 69.8, -1.4, 10.8, 1.88, 3.08, 33.2, 10.6, 17.8, 69.4, 12.4, 0.84, 1.08, "+4,8%", "22 Mi", "99,2%", "R$ 504 Bi", "NASDAQ", 87, 88, 70], ["BOEI34", "BA", "THE BOEING COMPANY", "Indústria / Aviação Comercial e Defesa", "NYSE", 15, 64.2, 63.1, 65.8, 56.4, 94.2, -4.6, 0.0, 0.0, 0.0, 0.0, -4.2, -18.4, 11.2, -4.8, 1.14, 0.0, "-38,0%", "18 Mi", "99,6%", "R$ -18 Bi", "NYSE", 98, 89, 65], ["FDXB34", "FDX", "FEDEX CORPORATION", "Transporte / Logística Expressa Global", "NYSE", 25, 68.4, 67.6, 69.4, 56.8, 76.2, 1.8, 15.8, 2.54, 1.94, 30.6, 10.2, 16.4, 26.8, 5.2, 1.34, 0.68, "+9,4%", "7 Mi", "92,4%", "R$ 164 Bi", "NYSE", 88, 90, 70], ["UPSS34", "UPS", "UNITED PARCEL SERVICE", "Transporte / Encomendas e Logística", "NYSE", 12, 66.8, 66.1, 67.6, 61.4, 79.8, -1.9, 18.4, 6.42, 4.82, 88.6, 16.8, 34.8, 24.2, 6.8, 1.22, 1.14, "-14,2%", "9 Mi", "99,4%", "R$ 102 Bi", "NYSE", 89, 91, 70], ["GMCO34", "GM", "GENERAL MOTORS COMPANY", "Automotivo / Veículos e Mobilidade", "NYSE", 4, 78.4, 77.4, 79.6, 48.2, 82.4, 6.8, 6.4, 0.86, 0.92, 5.8, 8.2, 14.4, 13.4, 5.8, 1.16, 1.64, "+16,8%", "24 Mi", "99,4%", "R$ 426 Bi", "NYSE", 90, 92, 70], ["FDMO34", "F", "FORD MOTOR COMPANY", "Automotivo / Veículos e Picapes", "NYSE", 1, 64.2, 63.4, 65.1, 54.8, 78.4, -1.2, 11.2, 0.98, 5.42, 60.7, 6.4, 9.2, 14.2, 2.4, 1.18, 3.12, "-8,4%", "54 Mi", "98,2%", "R$ 262 Bi", "NYSE", 91, 93, 69], ["TSLA34", "TSLA", "TESLA INC.", "Automotivo / Veículos Elétricos e IA", "NASDAQ", 32, 66.59, 64.9, 68.1, 34.5, 71.2, 24.6, 91.22, 12.93, 0.0, 0.0, 11.2, 13.8, 18.4, 7.8, 1.84, -0.22, "+14,5%", "98 Mi", "87,2%", "R$ 418 Bi", "NASDAQ", 93, 94, 68], ["BABA34", "BABA", "ALIBABA GROUP HOLDING", "Consumo & Cloud / E-commerce China", "NYSE", 8, 72.4, 71.2, 74.1, 52.4, 88.6, -3.4, 14.8, 1.54, 1.18, 17.4, 8.8, 10.6, 38.4, 9.2, 1.68, -0.24, "+12,4%", "32 Mi", "94,2%", "R$ 840 Bi", "NYSE", 94, 95, 68], ["JDCO34", "JD", "JD.COM INC.", "Varejo / E-commerce e Logística China", "NASDAQ", 4, 58.4, 57.4, 59.8, 36.8, 68.4, -2.8, 11.6, 1.48, 2.14, 24.8, 9.6, 13.2, 15.4, 3.1, 1.28, -0.32, "+28,4%", "24 Mi", "84,6%", "R$ 196 Bi", "NASDAQ", 95, 96, 68], ["BIDU34", "BIDU", "BAIDU INC.", "Tecnologia / Busca e IA China", "NASDAQ", 8, 68.2, 67.1, 69.8, 58.4, 86.2, -4.1, 11.2, 0.88, 0.0, 0.0, 6.8, 8.1, 51.4, 14.6, 2.46, -0.48, "+4,2%", "9 Mi", "82,4%", "R$ 218 Bi", "NASDAQ", 96, 97, 67], ["SONY34", "SONY", "SONY GROUP CORPORATION", "Tecnologia / Games, Música e Sensores", "NYSE", 2, 62.4, 61.8, 63.2, 48.6, 66.8, 3.2, 16.8, 2.18, 0.64, 10.7, 9.4, 13.2, 28.4, 7.8, 0.92, 0.14, "+14,6%", "8 Mi", "99,5%", "R$ 304 Bi", "NYSE", 97, 98, 67], ["TMCO34", "TM", "TOYOTA MOTOR CORPORATION", "Automotivo / Montadora Global", "NYSE", 15, 71.8, 71.1, 72.6, 61.4, 86.8, 1.4, 9.8, 1.08, 2.48, 24.3, 8.6, 11.4, 20.4, 9.8, 1.18, 0.82, "+18,4%", "7 Mi", "84,2%", "R$ 1.320 Bi", "NYSE", 99, 99, 67], ["VALE3", "VALE", "VALE S.A. (REF. B3 / ADR)", "Mineração / Minério de Ferro e Níquel", "NYSE", 1, 58.9, 58.2, 59.6, 54.8, 68.4, -1.8, 6.8, 1.24, 7.85, 53.3, 16.4, 18.8, 41.2, 21.4, 1.28, 0.34, "-8,2%", "48 Mi", "99,2%", "R$ 214 Bi", "B3/NYSE", 100, 100, 66]];
 
     const BDR_DATABASE = {};
+
+    function parseMetricNumber(str) {
+      if (typeof str === "number") return str;
+      const cleaned = String(str).replace(/[^0-9,.-]/g, "").replace(",", ".");
+      const n = parseFloat(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    }
 
     function buildAsset(row) {
       const [
         ticker, usTicker, name, sector, exchange, parity,
         priceBrl, dayLow, dayHigh, min52w, max52w, monthPct,
         pl, pvpa, dy, payout, roic, roe,
-        mrgBrut, mrgLiq, liqCor, divPatr, lucro12m, rank, score
+        mrgBrut, mrgLiq, liqCor, divPatr, lucro12m,
+        negDia, freeFloat, patrLiq, gov, rankFinanc, rankIv, score
       ] = row;
 
       const usPrice = Number(((priceBrl * parity) / liveFxUsdBrl).toFixed(2));
@@ -298,7 +309,12 @@
         ticker, usTicker, name, sector, exchange, parity,
         priceBrl, usPrice, dayLow, dayHigh, min52w, max52w, monthPct,
         pl, pvpa, dy, payout, roic, roe, mrgBrut, mrgLiq, liqCor, divPatr,
-        lucro12m, rank, score, lpa, vpa,
+        lucro12m, lucro12mNum: parseMetricNumber(lucro12m),
+        negDia, negDiaNum: parseMetricNumber(negDia),
+        freeFloat, freeFloatNum: parseMetricNumber(freeFloat),
+        patrLiq, patrLiqNum: parseMetricNumber(patrLiq),
+        gov, rankFinanc, rankIv, score, lpa, vpa,
+        lastSyncTs: 0,
         sourceLabel: "Base Verificada"
       };
     }
@@ -307,7 +323,7 @@
       BDR_DATABASE[row[0]] = buildAsset(row);
     });
 
-    function applyLiveQuote(asset, q) {
+    function applyLiveQuote(asset, q, ts = Date.now()) {
       if (!q || !Number.isFinite(q.priceBrl) || q.priceBrl <= 0) return;
       asset.priceBrl = q.priceBrl;
       if (Number.isFinite(q.dayLow) && q.dayLow > 0) asset.dayLow = q.dayLow;
@@ -318,64 +334,94 @@
       asset.usPrice = Number(((asset.priceBrl * asset.parity) / liveFxUsdBrl).toFixed(2));
       if (asset.lpa > 0) asset.pl = Number((asset.priceBrl / asset.lpa).toFixed(2));
       if (asset.vpa > 0) asset.pvpa = Number((asset.priceBrl / asset.vpa).toFixed(2));
-      asset.sourceLabel = "Tempo Real B3 (Netlify)";
+      asset.lastSyncTs = ts;
+      asset.sourceLabel = "Tempo Real B3 (Cache 5m)";
     }
 
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
       if (saved && saved.quotes) {
         if (saved.usdBrl) liveFxUsdBrl = saved.usdBrl;
+        if (saved.lastBatchSyncTs) lastBatchSyncTs = saved.lastBatchSyncTs;
         Object.entries(saved.quotes).forEach(([tk, q]) => {
-          if (BDR_DATABASE[tk]) applyLiveQuote(BDR_DATABASE[tk], q);
+          if (BDR_DATABASE[tk]) applyLiveQuote(BDR_DATABASE[tk], q, q.ts || saved.lastBatchSyncTs || 0);
         });
       }
     } catch (_) {}
 
     let currentAsset = BDR_DATABASE["NVDC34"];
 
-    async function syncFromNetlifyFunction(tickersList, silent = false) {
+    async function syncFromServerFunction(tickersList, { silent = false, force = false } = {}) {
       const badge = document.getElementById("syncStatusBadge");
-      if (!silent) badge.textContent = "Atualizando cotações B3 & USD/BRL via servidor...";
+      const now = Date.now();
 
-      const query = encodeURIComponent(tickersList.join(","));
-      try {
-        const res = await fetch(`/.netlify/functions/quotes?tickers=${query}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (Number.isFinite(data.usdBrl) && data.usdBrl > 3 && data.usdBrl < 10) {
-            liveFxUsdBrl = Number(data.usdBrl.toFixed(2));
-          }
-          let updatedCount = 0;
-          if (data.quotes) {
-            Object.entries(data.quotes).forEach(([tk, q]) => {
-              if (BDR_DATABASE[tk] && q && q.priceBrl > 0) {
-                applyLiveQuote(BDR_DATABASE[tk], q);
-                updatedCount++;
-              }
-            });
-          }
-          Object.values(BDR_DATABASE).forEach(a => {
-            a.usPrice = Number(((a.priceBrl * a.parity) / liveFxUsdBrl).toFixed(2));
+      // Carregamento sob demanda com cache local de 5 minutos
+      const targets = force
+        ? tickersList
+        : tickersList.filter(tk => {
+            const a = BDR_DATABASE[tk];
+            return a && (now - (a.lastSyncTs || 0) > CLIENT_CACHE_TTL_MS);
           });
 
-          try {
-            const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"quotes":{}}');
-            existing.usdBrl = liveFxUsdBrl;
-            existing.quotes = { ...(existing.quotes || {}), ...(data.quotes || {}) };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-          } catch (_) {}
+      if (targets.length === 0) {
+        const nowStr = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+        document.getElementById("fxHeaderLabel").textContent = `USD R$ ${formatBr(liveFxUsdBrl)}`;
+        badge.textContent = `Dólar: R$ ${formatBr(liveFxUsdBrl)} • Cache ativo 5m (${nowStr})`;
+        renderAsset(currentAsset);
+        if (!document.getElementById("viewRanking").classList.contains("hidden")) renderRankingTable();
+        return;
+      }
 
-          const nowStr = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-          document.getElementById("fxHeaderLabel").textContent = `USD R$ ${formatBr(liveFxUsdBrl)}`;
-          badge.textContent = updatedCount > 0
-            ? `Dólar: R$ ${formatBr(liveFxUsdBrl)} • ${updatedCount} BDRs sincronizados (${nowStr})`
-            : `Dólar: R$ ${formatBr(liveFxUsdBrl)} • Base Verificada (${nowStr})`;
+      if (!silent) badge.textContent = `Sincronizando ${targets.length} ativo(s) via Cloudflare...`;
 
-          renderAsset(currentAsset);
-          renderRankingTable();
-          return;
-        }
-      } catch (_) {}
+      const chunkSize = 25;
+      let totalUpdated = 0;
+      const savedQuotesPayload = {};
+
+      for (let i = 0; i < targets.length; i += chunkSize) {
+        const slice = targets.slice(i, i + chunkSize);
+        const query = encodeURIComponent(slice.join(","));
+        try {
+          const res = await fetch(`/api/quotes?tickers=${query}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (Number.isFinite(data.usdBrl) && data.usdBrl > 3 && data.usdBrl < 10) {
+              liveFxUsdBrl = Number(data.usdBrl.toFixed(2));
+            }
+            if (data.quotes) {
+              Object.entries(data.quotes).forEach(([tk, q]) => {
+                if (BDR_DATABASE[tk] && q && q.priceBrl > 0) {
+                  applyLiveQuote(BDR_DATABASE[tk], q, now);
+                  savedQuotesPayload[tk] = { ...q, ts: now };
+                  totalUpdated++;
+                }
+              });
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (totalUpdated > 0) {
+        Object.values(BDR_DATABASE).forEach(a => {
+          a.usPrice = Number(((a.priceBrl * a.parity) / liveFxUsdBrl).toFixed(2));
+        });
+        if (targets.length >= 50) lastBatchSyncTs = now;
+
+        try {
+          const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"quotes":{}}');
+          existing.usdBrl = liveFxUsdBrl;
+          existing.lastBatchSyncTs = lastBatchSyncTs;
+          existing.quotes = { ...(existing.quotes || {}), ...savedQuotesPayload };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+        } catch (_) {}
+
+        const nowStr = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+        document.getElementById("fxHeaderLabel").textContent = `USD R$ ${formatBr(liveFxUsdBrl)}`;
+        badge.textContent = `Dólar: R$ ${formatBr(liveFxUsdBrl)} • ${totalUpdated} BDR(s) sincronizados (${nowStr})`;
+        renderAsset(currentAsset);
+        if (!document.getElementById("viewRanking").classList.contains("hidden")) renderRankingTable();
+        return;
+      }
 
       try {
         const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
@@ -387,18 +433,27 @@
       } catch (_) {}
 
       document.getElementById("fxHeaderLabel").textContent = `USD R$ ${formatBr(liveFxUsdBrl)}`;
-      badge.textContent = `Dólar: R$ ${formatBr(liveFxUsdBrl)} • Modo Estático Verificado`;
+      badge.textContent = `Dólar: R$ ${formatBr(liveFxUsdBrl)} • Base Verificada (100 BDRs)`;
       renderAsset(currentAsset);
-      renderRankingTable();
+      if (!document.getElementById("viewRanking").classList.contains("hidden")) renderRankingTable();
     }
 
     function formatBr(val, dec = 2) {
       return Number(val).toFixed(dec).replace(".", ",");
     }
 
+    function updateFavHeaderButton() {
+      const btn = document.getElementById("btnFavCurrent");
+      const isFav = favoritesSet.has(currentAsset.ticker);
+      btn.className = isFav
+        ? "text-base px-2 py-0.5 rounded bg-rose-950/80 border border-rose-700 text-rose-400 transition"
+        : "text-base px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 transition";
+    }
+
     function renderAsset(asset) {
       currentAsset = asset;
       document.getElementById("tickerInput").value = asset.ticker;
+      updateFavHeaderButton();
 
       document.querySelectorAll("#shortcutsBar button").forEach(btn => {
         btn.classList.toggle("active", btn.dataset.ticker === asset.ticker);
@@ -421,7 +476,7 @@
       document.getElementById("assetUsFxText").textContent = `US$ ${formatBr(asset.usPrice)} • R$ ${formatBr(liveFxUsdBrl)}`;
       document.getElementById("assetSourceText").textContent = asset.sourceLabel;
 
-      document.getElementById("assetRankLabel").textContent = `#${asset.rank} Posi. Rank Geral`;
+      document.getElementById("assetRankLabel").textContent = `#${asset.rankIv} Rank IV • #${asset.rankFinanc} Rank Financ`;
       document.getElementById("assetScoreBar").style.width = `${asset.score}%`;
       document.getElementById("assetScoreText").textContent = `${asset.score}/100`;
       document.getElementById("assetDayRangeHeader").textContent = `R$ ${formatBr(asset.dayLow)} – R$ ${formatBr(asset.dayHigh)}`;
@@ -429,7 +484,7 @@
       document.getElementById("opinionContainer").innerHTML = `
         <p><strong class="text-white">${asset.ticker}</strong> está cotada a <strong class="text-emerald-400">R$ ${formatBr(asset.priceBrl)}</strong>, refletindo a paridade oficial de <strong class="text-cyan-300">1 ${asset.usTicker} = ${asset.parity} BDRs</strong> na B3 (matriz equivalente a US$ ${formatBr(asset.usPrice)} ao câmbio de R$ ${formatBr(liveFxUsdBrl)}). Negocia a <strong class="text-white">P/L de ${formatBr(asset.pl)}x</strong> e <strong class="text-white">P/VPA de ${formatBr(asset.pvpa)}x</strong>.</p>
         <p>Nos fundamentos operacionais, entrega <strong class="text-white">ROE de ${formatBr(asset.roe)}%</strong> e <strong class="text-white">ROIC de ${formatBr(asset.roic)}%</strong> (frente à Selic de 13,75%), com margem bruta de ${formatBr(asset.mrgBrut, 1)}%, margem líquida de ${formatBr(asset.mrgLiq, 1)}% e variação de lucro em 12 meses de <strong class="text-emerald-400">${asset.lucro12m}</strong>.</p>
-        <p><strong class="text-amber-400">Veredito:</strong> Classificado na posição <strong class="text-white">#${asset.rank}</strong> com Score GARP/IV de <strong class="text-emerald-400">${asset.score}/100</strong> e Dividend Yield de ${formatBr(asset.dy)}%, mantendo exposição cambial direta ao dólar.</p>
+        <p><strong class="text-amber-400">Veredito:</strong> Posição <strong class="text-white">#${asset.rankIv}</strong> no Rank IV e <strong class="text-white">#${asset.rankFinanc}</strong> no Rank Financ, com Score GARP/IV de <strong class="text-emerald-400">${asset.score}/100</strong> e D.Y. de ${formatBr(asset.dy)}%.</p>
       `;
 
       const pos52w = ((asset.priceBrl - asset.min52w) / Math.max(0.01, asset.max52w - asset.min52w)) * 100;
@@ -443,14 +498,14 @@
           <span><strong class="text-white">Faixa de 52 semanas:</strong> Mín. anual R$ ${formatBr(asset.min52w)} e Máx. anual R$ ${formatBr(asset.max52w)} (amplitude em ${formatBr(pos52w, 0)}%).</span>
         </li>
         <li class="flex items-start gap-2 bg-slate-950/60 p-2 rounded-lg border border-slate-800/80">
-          <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">MÚLTIPLOS</span>
-          <span><strong class="text-white">Valuation atualizado:</strong> P/L ${formatBr(asset.pl)}x • P/VPA ${formatBr(asset.pvpa)}x • D.Y. ${formatBr(asset.dy)}% • Payout ${formatBr(asset.payout, 1)}%.</span>
+          <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">LIQUIDEZ</span>
+          <span><strong class="text-white">Negociação &amp; Patrimônio:</strong> Volume médio ${asset.negDia} • Free Float ${asset.freeFloat} • Patr. Líquido ${asset.patrLiq}.</span>
         </li>
       `;
 
       document.getElementById("factsContainer").innerHTML = `
         <li class="border-l-2 border-amber-500 pl-2.5"><strong class="text-white">Cotação B3 &amp; Paridade:</strong> ${asset.ticker} negociada a R$ ${formatBr(asset.priceBrl)} na proporção oficial de 1 ${asset.usTicker} para cada ${asset.parity} BDRs.</li>
-        <li class="border-l-2 border-cyan-500 pl-2.5"><strong class="text-white">Sincronização Serverless:</strong> Preços atualizados diretamente via função Netlify sem bloqueios de CORS no navegador.</li>
+        <li class="border-l-2 border-cyan-500 pl-2.5"><strong class="text-white">Carregamento Sob Demanda &amp; Cache 5m:</strong> Cotações sincronizadas sob demanda via Cloudflare Pages Functions com cache de 5 minutos para alta escalabilidade.</li>
         <li class="border-l-2 border-emerald-500 pl-2.5"><strong class="text-white">Consistência Fundamentalista:</strong> Lucro em 12 meses de ${asset.lucro12m}, ROE de ${formatBr(asset.roe)}% e liquidez corrente de ${formatBr(asset.liqCor)}x.</li>
       `;
 
@@ -464,12 +519,12 @@
         ["P/VPA", `${formatBr(asset.pvpa)}x`, "text-white"],
         ["Dividend Yield", `${formatBr(asset.dy)}%`, "text-emerald-400"],
         ["Payout", `${formatBr(asset.payout, 1)}%`, "text-slate-200"],
-        ["LPA (BDR)", `R$ ${formatBr(asset.lpa)}`, "text-slate-200"],
-        ["VPA (BDR)", `R$ ${formatBr(asset.vpa)}`, "text-slate-200"],
-        ["ROE", `${formatBr(asset.roe)}%`, "text-emerald-400"],
-        ["ROIC", `${formatBr(asset.roic)}%`, "text-emerald-400"],
-        ["Margem Bruta", `${formatBr(asset.mrgBrut, 1)}%`, "text-white"],
-        ["Margem Líquida", `${formatBr(asset.mrgLiq, 1)}%`, "text-white"]
+        ["ROE / ROIC", `${formatBr(asset.roe)}% / ${formatBr(asset.roic)}%`, "text-emerald-400"],
+        ["Mrg. Bruta / Líq.", `${formatBr(asset.mrgBrut, 1)}% / ${formatBr(asset.mrgLiq, 1)}%`, "text-white"],
+        ["Liq. Corrente", `${formatBr(asset.liqCor)}x`, "text-slate-200"],
+        ["Dív. / Patr.", `${formatBr(asset.divPatr)}x`, "text-slate-200"],
+        ["Lucro 12 Meses", `${asset.lucro12m}`, "text-emerald-400"],
+        ["Patr. Líquido", `${asset.patrLiq}`, "text-white"]
       ];
 
       document.getElementById("fundamentalsGrid").innerHTML = metrics.map(([label, val, color]) => `
@@ -570,10 +625,15 @@
         {
           type: "bar",
           title: "Lucro Líquido / Dividendos",
-          datasets: [
-            { label: "Lucro", data: makeQuarterlyBars(asset.roe * 0.75, 0.02, 0.25), backgroundColor: "#7fb3d5", borderColor: "#5499c7", borderWidth: 1 },
-            { label: "Div.", data: makeQuarterlyBars(asset.dy * 4.5, 0.015, 0.2), backgroundColor: "#7bc47f", borderColor: "#4c9a52", borderWidth: 1 }
-          ]
+          datasets: (() => {
+            const lucroSeries = makeQuarterlyBars(asset.roe * 0.75, 0.02, 0.25);
+            const payoutRatio = asset.payout > 0 ? Math.min(0.85, Math.max(0.18, asset.payout / 100)) : 0.22;
+            const divSeries = lucroSeries.map((v, i) => Number((v * payoutRatio * (0.85 + Math.cos(i * 0.55) * 0.2)).toFixed(1)));
+            return [
+              { label: "Lucro", data: lucroSeries, backgroundColor: "#7fb3d5", borderColor: "#5499c7", borderWidth: 1 },
+              { label: "Div.", data: divSeries, backgroundColor: "#7bc47f", borderColor: "#4c9a52", borderWidth: 1 }
+            ];
+          })()
         },
         {
           type: "bar",
@@ -637,6 +697,11 @@
               <span><strong class="text-blue-600">—●—</strong> Líq</span>
               <span><strong class="text-green-700">—●—</strong> Ebit</span>
               <span><strong class="text-slate-900">—●—</strong> Bruta</span>
+            </div>` : ""}
+          ${spec.title === "Lucro Líquido / Dividendos" ? `
+            <div class="flex items-center justify-center gap-4 text-[11px] text-slate-700 mt-1.5 border border-slate-300 rounded py-1 bg-slate-50">
+              <span class="flex items-center gap-1"><span class="inline-block w-3 h-2.5 bg-[#7fb3d5] border border-[#5499c7]"></span> Lucro Líquido</span>
+              <span class="flex items-center gap-1"><span class="inline-block w-3 h-2.5 bg-[#7bc47f] border border-[#4c9a52]"></span> Dividendos</span>
             </div>` : ""}
         </div>
       `;
@@ -737,39 +802,71 @@
       });
     }
 
+    window.toggleFavorite = function(ev, ticker) {
+      ev.stopPropagation();
+      if (favoritesSet.has(ticker)) favoritesSet.delete(ticker);
+      else favoritesSet.add(ticker);
+      saveFavorites();
+      updateFavHeaderButton();
+      renderRankingTable();
+    };
+
     function renderRankingTable() {
       const term = (document.getElementById("rankingSearch").value || "").trim().toUpperCase();
       const list = Object.values(BDR_DATABASE)
+        .filter(a => (!onlyFavorites || favoritesSet.has(a.ticker)))
         .filter(a => !term || a.ticker.includes(term) || a.name.toUpperCase().includes(term) || a.sector.toUpperCase().includes(term))
         .sort((a, b) => {
+          if (currentSort.key === "fav") {
+            const fa = favoritesSet.has(a.ticker) ? 1 : 0;
+            const fb = favoritesSet.has(b.ticker) ? 1 : 0;
+            return currentSort.asc ? fb - fa : fa - fb;
+          }
           const va = a[currentSort.key];
           const vb = b[currentSort.key];
           if (typeof va === "string") return currentSort.asc ? va.localeCompare(vb) : vb.localeCompare(va);
           return currentSort.asc ? va - vb : vb - va;
         });
 
-      document.getElementById("rankingTableBody").innerHTML = list.map(a => `
-        <tr class="hover:bg-slate-800/60 transition cursor-pointer" onclick="openTickerFromRanking('${a.ticker}')">
-          <td class="py-2.5 px-2 font-bold text-slate-400">#${a.rank}</td>
-          <td class="py-2.5 px-2 font-black text-amber-400">${a.ticker}</td>
-          <td class="py-2.5 px-2 text-slate-200 font-medium">${a.name}</td>
-          <td class="py-2.5 px-2 text-right text-cyan-300 font-semibold">1:${a.parity}</td>
-          <td class="py-2.5 px-2 text-right text-slate-300">US$ ${formatBr(a.usPrice)}</td>
-          <td class="py-2.5 px-2 text-right font-extrabold text-emerald-400">R$ ${formatBr(a.priceBrl)}</td>
-          <td class="py-2.5 px-2 text-right text-slate-200">${formatBr(a.pl)}x</td>
-          <td class="py-2.5 px-2 text-right text-slate-200">${formatBr(a.pvpa)}x</td>
-          <td class="py-2.5 px-2 text-right text-emerald-300">${formatBr(a.dy)}%</td>
-          <td class="py-2.5 px-2 text-right text-slate-200">${formatBr(a.roe)}%</td>
-          <td class="py-2.5 px-2 text-right text-slate-200">${formatBr(a.roic)}%</td>
-          <td class="py-2.5 px-2 text-right font-extrabold text-amber-300">${a.score}</td>
-        </tr>
-      `).join("");
+      document.getElementById("rankingTableBody").innerHTML = list.map(a => {
+        const oscilClass = a.monthPct >= 0 ? "text-emerald-400" : "text-rose-400";
+        const oscilSign = a.monthPct >= 0 ? "+" : "";
+        const lucroClass = a.lucro12mNum >= 0 ? "text-emerald-400" : "text-rose-400";
+        const isFav = favoritesSet.has(a.ticker);
+        return `
+          <tr class="hover:bg-slate-800/70 transition cursor-pointer" onclick="openTickerFromRanking('${a.ticker}')">
+            <td class="py-2 px-2 font-black text-amber-400" title="${a.name}">${a.ticker}</td>
+            <td class="py-2 px-2 text-center font-bold text-cyan-300 bg-slate-900/50">${a.rankFinanc}</td>
+            <td class="py-2 px-2 text-center font-bold text-amber-300 bg-slate-900/50">${a.rankIv}</td>
+            <td class="py-2 px-2 text-right font-extrabold text-emerald-400">${formatBr(a.priceBrl)}</td>
+            <td class="py-2 px-2 text-right font-bold ${oscilClass}">${oscilSign}${formatBr(a.monthPct, 1)}%</td>
+            <td class="py-2 px-2 text-right text-slate-200">${formatBr(a.pl)}</td>
+            <td class="py-2 px-2 text-right text-slate-200">${formatBr(a.pvpa)}</td>
+            <td class="py-2 px-2 text-right text-emerald-300">${formatBr(a.dy)}%</td>
+            <td class="py-2 px-2 text-right text-slate-300">${formatBr(a.payout, 1)}%</td>
+            <td class="py-2 px-2 text-right text-slate-200">${formatBr(a.roic, 1)}%</td>
+            <td class="py-2 px-2 text-right text-slate-200">${formatBr(a.roe, 1)}%</td>
+            <td class="py-2 px-2 text-right text-slate-300">${formatBr(a.mrgBrut, 1)}%</td>
+            <td class="py-2 px-2 text-right text-slate-300">${formatBr(a.mrgLiq, 1)}%</td>
+            <td class="py-2 px-2 text-right text-slate-300">${formatBr(a.liqCor)}</td>
+            <td class="py-2 px-2 text-right text-slate-300">${formatBr(a.divPatr)}</td>
+            <td class="py-2 px-2 text-right font-bold ${lucroClass}">${a.lucro12m}</td>
+            <td class="py-2 px-2 text-right text-slate-300">${a.negDia}</td>
+            <td class="py-2 px-2 text-right text-slate-300">${a.freeFloat}</td>
+            <td class="py-2 px-2 text-right text-slate-200">${a.patrLiq}</td>
+            <td class="py-2 px-2 text-center text-slate-400 font-semibold">${a.gov}</td>
+            <td class="py-2 px-2 text-center text-sm ${isFav ? "text-rose-500" : "text-slate-600 hover:text-rose-400"}" onclick="toggleFavorite(event, '${a.ticker}')">♥</td>
+            <td class="py-2 px-2 text-center text-cyan-400 hover:text-amber-300" title="Abrir gráficos históricos">📈</td>
+          </tr>
+        `;
+      }).join("");
     }
 
     window.openTickerFromRanking = function(ticker) {
       switchTab("individual");
       renderAsset(BDR_DATABASE[ticker]);
-      syncFromNetlifyFunction([ticker], true);
+      // Carregamento sob demanda do ativo selecionado
+      syncFromServerFunction([ticker], { silent: true, force: false });
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
@@ -797,9 +894,13 @@
         btn.addEventListener("click", () => {
           switchTab("individual");
           renderAsset(BDR_DATABASE[tk]);
-          syncFromNetlifyFunction([tk], true);
+          syncFromServerFunction([tk], { silent: true, force: false });
         });
         bar.appendChild(btn);
+      });
+
+      document.getElementById("btnFavCurrent").addEventListener("click", (e) => {
+        window.toggleFavorite(e, currentAsset.ticker);
       });
 
       document.getElementById("btnAnalyze").addEventListener("click", () => {
@@ -807,9 +908,9 @@
         if (BDR_DATABASE[tk]) {
           switchTab("individual");
           renderAsset(BDR_DATABASE[tk]);
-          syncFromNetlifyFunction([tk], false);
+          syncFromServerFunction([tk], { silent: false, force: false });
         } else {
-          alert(`Ticker ${tk} não está na lista. Consulte a aba Super Ranking para ver os BDRs cadastrados.`);
+          alert(`Ticker ${tk} não encontrado. Consulte a aba Super Ranking (100 Ativos) para ver os BDRs cadastrados.`);
         }
       });
 
@@ -818,16 +919,26 @@
       });
 
       document.getElementById("btnRefreshQuotes").addEventListener("click", () => {
-        syncFromNetlifyFunction(Object.keys(BDR_DATABASE), false);
+        syncFromServerFunction(Object.keys(BDR_DATABASE), { silent: false, force: false });
       });
 
       document.getElementById("btnSyncFx").addEventListener("click", () => {
-        syncFromNetlifyFunction([currentAsset.ticker], false);
+        syncFromServerFunction([currentAsset.ticker], { silent: false, force: true });
       });
 
       document.getElementById("tabIndividual").addEventListener("click", () => switchTab("individual"));
       document.getElementById("tabRanking").addEventListener("click", () => {
         switchTab("ranking");
+        renderRankingTable();
+        // Sincroniza em lote sob demanda apenas ao abrir o ranking (respeitando cache de 5 min)
+        syncFromServerFunction(Object.keys(BDR_DATABASE), { silent: true, force: false });
+      });
+
+      document.getElementById("btnOnlyFavs").addEventListener("click", (e) => {
+        onlyFavorites = !onlyFavorites;
+        e.target.className = onlyFavorites
+          ? "px-3 py-2 rounded-lg text-xs font-bold bg-rose-700 text-white border border-rose-500 transition"
+          : "px-3 py-2 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 transition";
         renderRankingTable();
       });
 
@@ -837,7 +948,10 @@
         th.addEventListener("click", () => {
           const key = th.dataset.sort;
           if (currentSort.key === key) currentSort.asc = !currentSort.asc;
-          else { currentSort.key = key; currentSort.asc = key === "rank" || key === "ticker" || key === "name"; }
+          else {
+            currentSort.key = key;
+            currentSort.asc = key === "rankIv" || key === "rankFinanc" || key === "ticker" || key === "gov";
+          }
           renderRankingTable();
         });
       });
@@ -866,7 +980,8 @@
 
       renderAsset(BDR_DATABASE["NVDC34"]);
       renderRankingTable();
-      syncFromNetlifyFunction(Object.keys(BDR_DATABASE), true);
+      // Na abertura da página, carrega sob demanda APENAS o ativo inicial (NVDC34)
+      syncFromServerFunction(["NVDC34"], { silent: true, force: false });
     });
   </script>
 </body>
