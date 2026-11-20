@@ -243,7 +243,7 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "analisador_bdr_cf_pages_v1";
+    const STORAGE_KEY = "analisador_bdr_netlify_fn_v3";
     Object.keys(localStorage).forEach(k => {
       if (k.startsWith("analisador_bdr_") && k !== STORAGE_KEY) localStorage.removeItem(k);
     });
@@ -318,7 +318,7 @@
       asset.usPrice = Number(((asset.priceBrl * asset.parity) / liveFxUsdBrl).toFixed(2));
       if (asset.lpa > 0) asset.pl = Number((asset.priceBrl / asset.lpa).toFixed(2));
       if (asset.vpa > 0) asset.pvpa = Number((asset.priceBrl / asset.vpa).toFixed(2));
-      asset.sourceLabel = "Tempo Real B3 (Cloudflare)";
+      asset.sourceLabel = "Tempo Real B3 (Netlify)";
     }
 
     try {
@@ -333,13 +333,13 @@
 
     let currentAsset = BDR_DATABASE["NVDC34"];
 
-    async function syncFromServerFunction(tickersList, silent = false) {
+    async function syncFromNetlifyFunction(tickersList, silent = false) {
       const badge = document.getElementById("syncStatusBadge");
-      if (!silent) badge.textContent = "Atualizando cotações B3 & USD/BRL via Cloudflare...";
+      if (!silent) badge.textContent = "Atualizando cotações B3 & USD/BRL via servidor...";
 
       const query = encodeURIComponent(tickersList.join(","));
       try {
-        const res = await fetch(`/api/quotes?tickers=${query}`);
+        const res = await fetch(`/.netlify/functions/quotes?tickers=${query}`);
         if (res.ok) {
           const data = await res.json();
           if (Number.isFinite(data.usdBrl) && data.usdBrl > 3 && data.usdBrl < 10) {
@@ -450,7 +450,7 @@
 
       document.getElementById("factsContainer").innerHTML = `
         <li class="border-l-2 border-amber-500 pl-2.5"><strong class="text-white">Cotação B3 &amp; Paridade:</strong> ${asset.ticker} negociada a R$ ${formatBr(asset.priceBrl)} na proporção oficial de 1 ${asset.usTicker} para cada ${asset.parity} BDRs.</li>
-        <li class="border-l-2 border-cyan-500 pl-2.5"><strong class="text-white">Sincronização Serverless:</strong> Preços atualizados diretamente via Cloudflare Pages Functions sem bloqueios de CORS no navegador.</li>
+        <li class="border-l-2 border-cyan-500 pl-2.5"><strong class="text-white">Sincronização Serverless:</strong> Preços atualizados diretamente via função Netlify sem bloqueios de CORS no navegador.</li>
         <li class="border-l-2 border-emerald-500 pl-2.5"><strong class="text-white">Consistência Fundamentalista:</strong> Lucro em 12 meses de ${asset.lucro12m}, ROE de ${formatBr(asset.roe)}% e liquidez corrente de ${formatBr(asset.liqCor)}x.</li>
       `;
 
@@ -570,15 +570,10 @@
         {
           type: "bar",
           title: "Lucro Líquido / Dividendos",
-          datasets: (() => {
-            const lucroSeries = makeQuarterlyBars(asset.roe * 0.75, 0.02, 0.25);
-            const payoutRatio = asset.payout > 0 ? Math.min(0.85, Math.max(0.18, asset.payout / 100)) : 0.22;
-            const divSeries = lucroSeries.map((v, i) => Number((v * payoutRatio * (0.85 + Math.cos(i * 0.55) * 0.2)).toFixed(1)));
-            return [
-              { label: "Lucro", data: lucroSeries, backgroundColor: "#7fb3d5", borderColor: "#5499c7", borderWidth: 1 },
-              { label: "Div.", data: divSeries, backgroundColor: "#7bc47f", borderColor: "#4c9a52", borderWidth: 1 }
-            ];
-          })()
+          datasets: [
+            { label: "Lucro", data: makeQuarterlyBars(asset.roe * 0.75, 0.02, 0.25), backgroundColor: "#7fb3d5", borderColor: "#5499c7", borderWidth: 1 },
+            { label: "Div.", data: makeQuarterlyBars(asset.dy * 4.5, 0.015, 0.2), backgroundColor: "#7bc47f", borderColor: "#4c9a52", borderWidth: 1 }
+          ]
         },
         {
           type: "bar",
@@ -642,11 +637,6 @@
               <span><strong class="text-blue-600">—●—</strong> Líq</span>
               <span><strong class="text-green-700">—●—</strong> Ebit</span>
               <span><strong class="text-slate-900">—●—</strong> Bruta</span>
-            </div>` : ""}
-          ${spec.title === "Lucro Líquido / Dividendos" ? `
-            <div class="flex items-center justify-center gap-4 text-[11px] text-slate-700 mt-1.5 border border-slate-300 rounded py-1 bg-slate-50">
-              <span class="flex items-center gap-1"><span class="inline-block w-3 h-2.5 bg-[#7fb3d5] border border-[#5499c7]"></span> Lucro Líquido</span>
-              <span class="flex items-center gap-1"><span class="inline-block w-3 h-2.5 bg-[#7bc47f] border border-[#4c9a52]"></span> Dividendos</span>
             </div>` : ""}
         </div>
       `;
@@ -779,7 +769,7 @@
     window.openTickerFromRanking = function(ticker) {
       switchTab("individual");
       renderAsset(BDR_DATABASE[ticker]);
-      syncFromServerFunction([ticker], true);
+      syncFromNetlifyFunction([ticker], true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
@@ -807,7 +797,7 @@
         btn.addEventListener("click", () => {
           switchTab("individual");
           renderAsset(BDR_DATABASE[tk]);
-          syncFromServerFunction([tk], true);
+          syncFromNetlifyFunction([tk], true);
         });
         bar.appendChild(btn);
       });
@@ -817,7 +807,7 @@
         if (BDR_DATABASE[tk]) {
           switchTab("individual");
           renderAsset(BDR_DATABASE[tk]);
-          syncFromServerFunction([tk], false);
+          syncFromNetlifyFunction([tk], false);
         } else {
           alert(`Ticker ${tk} não está na lista. Consulte a aba Super Ranking para ver os BDRs cadastrados.`);
         }
@@ -828,11 +818,11 @@
       });
 
       document.getElementById("btnRefreshQuotes").addEventListener("click", () => {
-        syncFromServerFunction(Object.keys(BDR_DATABASE), false);
+        syncFromNetlifyFunction(Object.keys(BDR_DATABASE), false);
       });
 
       document.getElementById("btnSyncFx").addEventListener("click", () => {
-        syncFromServerFunction([currentAsset.ticker], false);
+        syncFromNetlifyFunction([currentAsset.ticker], false);
       });
 
       document.getElementById("tabIndividual").addEventListener("click", () => switchTab("individual"));
@@ -876,7 +866,7 @@
 
       renderAsset(BDR_DATABASE["NVDC34"]);
       renderRankingTable();
-      syncFromServerFunction(Object.keys(BDR_DATABASE), true);
+      syncFromNetlifyFunction(Object.keys(BDR_DATABASE), true);
     });
   </script>
 </body>
