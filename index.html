@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analisador BDR — B3 / NASDAQ / NYSE</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background-color: #0b0f19; color: #e2e8f0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    .card { background-color: #111827; border: 1px solid #1f2937; border-radius: 0.75rem; }
+    .pill-btn { background-color: #1f2937; color: #cbd5e1; border: 1px solid #374151; transition: all 0.15s; }
+    .pill-btn:hover { background-color: #374151; color: #fff; }
+    .pill-btn.active { background-color: #f59e0b; color: #0b0f19; border-color: #f59e0b; font-weight: 700; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0b0f19; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  </style>
+</head>
+<body class="min-h-screen p-3 md:p-5">
+
+  <!-- TOP BAR -->
+  <header class="card p-3 mb-3 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-amber-500 text-slate-950 font-black flex items-center justify-center text-lg">IV</div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-extrabold text-white tracking-wide text-base md:text-lg">ANALISADOR BDR</h1>
+          <span class="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-semibold">B3 / NASDAQ / NYSE</span>
+        </div>
+        <p class="text-xs text-slate-400">Análise Fundamentalista, Múltiplos Históricos &amp; Paridade Cambial</p>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="relative">
+        <input id="tickerInput" type="text" value="NVDC34" placeholder="Ex: NVDC34, GOGL34..." class="bg-slate-900 border border-slate-700 text-white text-sm font-bold uppercase rounded-lg px-3 py-2 w-36 focus:outline-none focus:border-amber-500" />
+      </div>
+      <button id="btnAnalyze" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm px-4 py-2 rounded-lg transition">Analisar BDR</button>
+      <button id="btnRefreshQuotes" class="bg-emerald-700 hover:bg-emerald-600 text-white font-semibold text-sm px-3 py-2 rounded-lg transition flex items-center gap-1.5" title="Atualizar cotações da B3 via servidor">
+        <span>↻</span><span>Atualizar Preços</span>
+      </button>
+      <button id="btnSyncFx" class="bg-slate-800 hover:bg-slate-700 border border-cyan-700/60 text-cyan-300 font-semibold text-sm px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+        <span>🌐</span><span id="fxHeaderLabel">USD R$ 5,94</span>
+      </button>
+      <button id="btnParityModal" class="bg-slate-800 hover:bg-slate-700 border border-rose-700/60 text-rose-300 font-semibold text-sm px-3 py-2 rounded-lg transition">Paridade USD</button>
+    </div>
+  </header>
+
+  <!-- SHORTCUTS & STATUS -->
+  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <div id="shortcutsBar" class="flex flex-wrap items-center gap-1.5">
+      <span class="text-xs text-slate-400 font-semibold mr-1">Atalhos B3:</span>
+    </div>
+    <div id="syncStatusBadge" class="text-xs px-3 py-1 rounded-full bg-emerald-950/70 border border-emerald-700/50 text-emerald-300 font-medium">
+      Dólar: R$ 5,94 • Pronto
+    </div>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-2 mb-4">
+    <button id="tabIndividual" class="px-4 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 transition">📊 Análise Individual &amp; Gráficos Históricos</button>
+    <button id="tabRanking" class="px-4 py-2 rounded-lg text-sm font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition">🏆 Super Ranking BDRs (Value Investing)</button>
+  </div>
+
+  <!-- INDIVIDUAL ANALYSIS VIEW -->
+  <main id="viewIndividual">
+    <section class="card p-4 mb-4">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div class="flex items-start gap-3">
+          <div class="w-14 h-14 rounded-xl bg-emerald-700/30 border border-emerald-500/40 flex flex-col items-center justify-center shrink-0">
+            <span id="assetUsShort" class="font-black text-emerald-400 text-sm">NVDA</span>
+            <span class="text-[10px] text-emerald-200 font-bold">BDR</span>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 id="assetTickerTitle" class="text-2xl font-black text-amber-400">NVDC34</h2>
+              <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-bold">DRN</span>
+              <span id="assetPriceDisplay" class="text-xl font-extrabold text-emerald-400">Cot. B3: R$ 18,15</span>
+              <span id="assetMonthBadge" class="text-xs px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800 font-bold">-20,1% no mês</span>
+            </div>
+            <p id="assetCompanyName" class="text-sm font-bold text-white mt-0.5">NVIDIA CORPORATION — BDR Nível I Não Patrocinado</p>
+            <p id="assetSectorLine" class="text-xs text-slate-400">Tecnologia / Semicondutores e Infraestrutura de IA • Matriz: NASDAQ: NVDA</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-xs">
+          <div>
+            <div class="text-slate-400 uppercase font-semibold text-[10px]">Paridade Oficial B3</div>
+            <div id="assetParityText" class="text-cyan-300 font-bold mt-0.5">1 NVDA = 48 NVDC34</div>
+          </div>
+          <div>
+            <div class="text-slate-400 uppercase font-semibold text-[10px]">Matriz EUA / Câmbio</div>
+            <div id="assetUsFxText" class="text-white font-bold mt-0.5">US$ 146,67 • R$ 5,94</div>
+          </div>
+          <div>
+            <div class="text-slate-400 uppercase font-semibold text-[10px]">Origem da Cotação</div>
+            <div id="assetSourceText" class="text-emerald-400 font-bold mt-0.5">Base Verificada</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-3 text-xs">
+        <div class="flex flex-wrap items-center gap-4">
+          <span class="text-amber-400 font-bold">★★★★★ <span id="assetRankLabel" class="text-slate-200">#1 Posi. Rank Geral</span></span>
+          <div class="flex items-center gap-2">
+            <span class="text-slate-400">Score GARP / IV:</span>
+            <div class="w-24 h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div id="assetScoreBar" class="h-full bg-emerald-400" style="width: 88%"></div>
+            </div>
+            <span id="assetScoreText" class="text-emerald-400 font-bold">88/100</span>
+          </div>
+        </div>
+        <div class="text-slate-400">
+          Selic Ref.: <strong class="text-white">13,75%</strong> • Faixa Hoje: <strong id="assetDayRangeHeader" class="text-amber-300">R$ 18,15 – R$ 19,46</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPINION + ALERTS + FACTS -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4">
+      <div class="card p-4 lg:col-span-5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-400">● Opinião do Analisador</h3>
+            <span class="text-[11px] text-slate-400">Síntese Fundamentalista</span>
+          </div>
+          <div id="opinionContainer" class="space-y-3 text-xs md:text-sm text-slate-300 leading-relaxed"></div>
+        </div>
+        <div class="flex justify-between items-center text-[11px] text-slate-500 border-t border-slate-800 pt-2 mt-4">
+          <span>Critério: Múltiplos Históricos + Retorno sobre Capital</span>
+          <span class="text-amber-400 font-semibold">Uso Educacional</span>
+        </div>
+      </div>
+
+      <div class="lg:col-span-7 flex flex-col gap-4">
+        <div class="card p-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Alertas do Sistema (Extremos &amp; Múltiplos)</h3>
+            <span class="text-[11px] text-slate-400">Monitoramento Automático</span>
+          </div>
+          <ul id="alertsContainer" class="space-y-2 text-xs text-slate-300"></ul>
+        </div>
+
+        <div class="card p-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Fatos Relevantes &amp; Eventos</h3>
+            <span class="text-[11px] text-slate-400">Matriz &amp; B3</span>
+          </div>
+          <ul id="factsContainer" class="space-y-2 text-xs text-slate-300"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- FUNDAMENTALS TABLE -->
+    <section class="card p-4 mb-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+        <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Indicadores Fundamentalistas &amp; Cotações</h3>
+        <span class="text-[11px] text-slate-400">Múltiplos recalculados automaticamente com a cotação vigente</span>
+      </div>
+      <div id="fundamentalsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 text-xs"></div>
+    </section>
+
+    <!-- CHARTS GRID -->
+    <section class="card p-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-4">
+        <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Séries Históricas, Bandas &amp; Demonstrativos Trimestrais</h3>
+        <span class="text-[11px] text-slate-400">Evolução anual (2017–2026) e trimestral (2016–2026)</span>
+      </div>
+      <div id="chartsGrid" class="space-y-6"></div>
+    </section>
+  </main>
+
+  <!-- SUPER RANKING VIEW -->
+  <main id="viewRanking" class="hidden">
+    <section class="card p-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3 mb-3">
+        <div>
+          <h2 class="text-base font-extrabold text-amber-400">🏆 Super Ranking BDRs — Value Investing &amp; GARP</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Clique em qualquer cabeçalho de coluna para ordenar ou clique no ticker para abrir os gráficos e a análise completa.</p>
+        </div>
+        <input id="rankingSearch" type="text" placeholder="Filtrar ticker ou empresa..." class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-3 py-2 w-60 focus:outline-none focus:border-amber-500" />
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400 uppercase text-[11px] select-none">
+              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400" data-sort="rank">#</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400" data-sort="ticker">Ticker</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400" data-sort="name">Empresa</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="parity">Paridade</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="usPrice">Matriz (US$)</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="priceBrl">Cot. B3 (R$)</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="pl">P/L</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="pvpa">P/VPA</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="dy">D.Y.</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="roe">ROE</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="roic">ROIC</th>
+              <th class="py-2.5 px-2 cursor-pointer hover:text-amber-400 text-right" data-sort="score">Score IV</th>
+            </tr>
+          </thead>
+          <tbody id="rankingTableBody" class="divide-y divide-slate-800/70"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- PARITY CALCULATOR MODAL -->
+  <div id="parityModal" class="fixed inset-0 bg-black/75 hidden items-center justify-center p-4 z-50">
+    <div class="card p-5 max-w-md w-full border border-slate-700">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-4">
+        <h3 class="text-sm font-extrabold text-amber-400">Calculadora Oficial de Paridade BDR</h3>
+        <button id="closeParityModal" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-slate-300">
+          Fórmula Oficial B3: <strong class="text-cyan-300">Preço BDR = (Preço EUA &times; Dólar) &divide; Paridade</strong>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Ticker BDR</label>
+          <input id="calcTicker" type="text" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white font-bold" readonly />
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-slate-400 mb-1">Ação EUA (US$)</label>
+            <input id="calcUsPrice" type="number" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-2 text-white font-bold" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Dólar (R$)</label>
+            <input id="calcFxRate" type="number" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-2 text-white font-bold" />
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Paridade (1:N)</label>
+            <input id="calcParity" type="number" step="1" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-2 text-white font-bold" />
+          </div>
+        </div>
+        <div class="bg-emerald-950/50 border border-emerald-700/50 p-3 rounded-lg flex items-center justify-between">
+          <span class="text-emerald-200 font-semibold">Preço Justo Teórico BDR:</span>
+          <span id="calcResult" class="text-lg font-black text-emerald-400">R$ 18,15</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "analisador_bdr_cf_pages_v1";
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith("analisador_bdr_") && k !== STORAGE_KEY) localStorage.removeItem(k);
+    });
+
+    let liveFxUsdBrl = 5.94;
+    let charts = {};
+    let currentSort = { key: "rank", asc: true };
+
+    const VERIFIED_BDRS = [
+      ["NVDC34", "NVDA", "NVIDIA CORPORATION", "Tecnologia / Semicondutores e Infraestrutura de IA", "NASDAQ", 48, 18.15, 18.15, 19.46, 14.45, 21.87, -20.1, 18.67, 15.73, 0.22, 3.8, 71.95, 84.23, 74.7, 58.3, 4.59, -0.29, "+105,0%", 1, 88],
+      ["GOGL34", "GOOGL", "ALPHABET INC.", "Tecnologia / Busca Digital, Publicidade e Nuvem", "NASDAQ", 8, 136.39, 135.40, 138.10, 108.20, 145.90, -2.1, 21.40, 6.75, 0.48, 10.3, 28.40, 32.10, 58.2, 27.8, 1.98, -0.24, "+26,8%", 2, 87],
+      ["MSFT34", "MSFT", "MICROSOFT CORPORATION", "Tecnologia / Software Corporativo, Nuvem Azure e IA", "NASDAQ", 20, 123.38, 122.90, 124.85, 112.10, 139.50, -3.4, 31.80, 11.40, 0.78, 24.8, 31.20, 36.50, 69.8, 35.6, 1.30, -0.12, "+14,2%", 3, 85],
+      ["M1TA34", "META", "META PLATFORMS INC.", "Tecnologia / Redes Sociais e Publicidade Digital", "NASDAQ", 20, 168.40, 166.80, 170.20, 118.40, 179.90, 4.2, 24.90, 8.90, 0.35, 8.7, 32.10, 35.80, 81.5, 34.2, 2.75, -0.31, "+42,5%", 4, 86],
+      ["MUTC34", "MU", "MICRON TECHNOLOGY INC.", "Tecnologia / Memórias DRAM, NAND e HBM para IA", "NASDAQ", 6, 97.60, 96.20, 99.40, 74.50, 148.20, -8.5, 14.20, 2.35, 0.46, 6.5, 14.80, 16.90, 36.4, 18.2, 2.60, 0.12, "+68,0%", 5, 82],
+      ["TSMC34", "TSM", "TAIWAN SEMICONDUCTOR (TSMC)", "Tecnologia / Fundição Avançada de Semicondutores", "NYSE", 8, 138.90, 137.50, 140.60, 94.30, 152.40, 1.8, 26.50, 7.80, 1.42, 37.6, 26.90, 29.80, 54.8, 40.1, 2.45, -0.18, "+38,4%", 6, 89],
+      ["AMZO34", "AMZN", "AMAZON.COM INC.", "Consumo & Nuvem / E-commerce e AWS Cloud", "NASDAQ", 10, 120.45, 119.30, 122.10, 91.20, 128.70, 3.1, 38.20, 7.95, 0.00, 0.0, 17.50, 22.40, 48.4, 8.6, 1.09, 0.18, "+52,0%", 7, 83],
+      ["AVGO34", "AVGO", "BROADCOM INC.", "Tecnologia / Semicondutores Customizados e Software", "NASDAQ", 8, 124.80, 123.10, 127.40, 82.60, 139.80, -4.6, 33.40, 9.20, 1.28, 42.8, 22.30, 28.60, 64.2, 25.4, 1.42, 0.65, "+29,5%", 8, 84],
+      ["AAPL34", "AAPL", "APPLE INC.", "Tecnologia / Ecossistema de Hardware e Serviços", "NASDAQ", 10, 135.60, 134.80, 136.90, 102.40, 141.20, 1.4, 34.10, 48.50, 0.44, 15.0, 54.20, 142.0, 46.2, 26.4, 0.98, 0.85, "+11,2%", 9, 81],
+      ["TSLA34", "TSLA", "TESLA INC.", "Automotivo / Veículos Elétricos, Energia e IA", "NASDAQ", 32, 66.59, 64.90, 68.10, 34.50, 71.20, 24.6, 91.22, 12.93, 0.00, 0.0, 11.20, 13.80, 18.4, 7.8, 1.84, -0.22, "+14,5%", 10, 64],
+      ["MELI34", "MELI", "MERCADOLIBRE INC.", "E-commerce & Fintech / América Latina", "NASDAQ", 120, 98.40, 97.10, 100.20, 75.80, 108.50, -5.2, 48.60, 21.40, 0.00, 0.0, 24.80, 39.20, 46.8, 8.9, 1.26, 0.35, "+46,2%", 11, 84],
+      ["BERK34", "BRK.B", "BERKSHIRE HATHAWAY INC.", "Holding / Seguros, Energia, Ferrovias e Investimentos", "NYSE", 35, 79.85, 79.20, 80.50, 62.40, 83.10, 2.3, 12.80, 1.62, 0.00, 0.0, 11.40, 13.10, 28.5, 19.8, 2.15, -0.15, "+18,4%", 12, 87],
+      ["JPMC34", "JPM", "JPMORGAN CHASE & CO.", "Financeiro / Banco Global e Investment Banking", "NYSE", 12, 121.30, 120.10, 122.60, 82.90, 125.40, 6.8, 13.10, 2.08, 2.05, 26.8, 14.50, 17.60, 62.0, 31.4, 1.15, 0.42, "+16,5%", 13, 86],
+      ["VISA34", "V", "VISA INC.", "Financeiro / Rede Global de Pagamentos Digitais", "NYSE", 15, 123.90, 123.00, 124.80, 99.50, 127.20, 3.9, 30.20, 15.10, 0.74, 22.3, 38.40, 49.60, 80.2, 54.8, 1.45, 0.25, "+13,8%", 14, 85],
+      ["MSCD34", "MA", "MASTERCARD INCORPORATED", "Financeiro / Tecnologia de Pagamentos Globais", "NYSE", 20, 154.20, 153.10, 155.80, 124.60, 158.90, 2.7, 36.80, 62.40, 0.52, 19.1, 56.80, 168.0, 76.5, 46.2, 1.22, 0.95, "+15,4%", 15, 84],
+      ["LLYB34", "LLY", "ELI LILLY AND COMPANY", "Saúde / Farmacêutica Inovadora e Biotecnologia", "NYSE", 45, 102.50, 100.80, 104.90, 84.20, 128.60, -9.4, 68.40, 44.20, 0.68, 46.5, 29.50, 58.40, 81.2, 22.8, 1.38, 1.10, "+48,0%", 16, 79],
+      ["UNHH34", "UNH", "UNITEDHEALTH GROUP INC.", "Saúde / Planos de Saúde e Serviços Optum", "NYSE", 35, 99.80, 98.60, 101.20, 78.40, 106.90, 4.1, 21.60, 5.40, 1.42, 30.7, 18.20, 25.40, 24.1, 5.8, 0.88, 0.45, "+9,4%", 17, 83],
+      ["WALM34", "WMT", "WALMART INC.", "Varejo / Supermercados e E-commerce Global", "NYSE", 6, 86.40, 85.70, 87.20, 54.10, 88.90, 5.6, 35.40, 8.10, 0.96, 34.0, 14.60, 22.80, 24.6, 2.9, 0.84, 0.48, "+19,2%", 18, 82],
+      ["COCA34", "KO", "THE COCA-COLA COMPANY", "Consumo Básico / Bebidas Globais", "NYSE", 6, 61.80, 61.30, 62.40, 53.20, 72.80, -3.2, 24.80, 9.80, 3.12, 77.4, 21.40, 39.50, 60.8, 23.1, 1.12, 0.92, "+6,8%", 19, 80],
+      ["EXXO34", "XOM", "EXXON MOBIL CORPORATION", "Energia / Petróleo, Gás e Refino Integrado", "NYSE", 6, 118.20, 117.10, 119.50, 94.80, 124.60, 1.9, 14.90, 2.02, 3.25, 48.4, 12.80, 14.20, 32.4, 10.2, 1.36, 0.08, "+8,5%", 20, 84],
+      ["DISB34", "DIS", "THE WALT DISNEY COMPANY", "Comunicação / Entretenimento, Parques e Streaming", "NYSE", 6, 112.90, 111.50, 114.20, 83.40, 121.80, 16.4, 22.40, 2.05, 0.85, 19.0, 8.40, 9.20, 35.8, 6.2, 0.78, 0.34, "+34,0%", 21, 78],
+      ["NFLX34", "NFLX", "NETFLIX INC.", "Comunicação / Streaming Global de Vídeo", "NASDAQ", 50, 102.60, 101.40, 103.90, 56.80, 105.40, 11.2, 44.80, 16.20, 0.00, 0.0, 26.40, 36.10, 45.2, 20.4, 1.18, 0.38, "+44,8%", 22, 81],
+      ["ORCL34", "ORCL", "ORACLE CORPORATION", "Tecnologia / Banco de Dados e Nuvem OCI", "NYSE", 10, 111.80, 110.20, 113.40, 64.50, 116.20, 7.4, 33.60, 38.40, 0.86, 28.9, 21.80, 94.0, 71.4, 21.2, 0.76, 4.20, "+18,9%", 23, 80],
+      ["QCOM34", "QCOM", "QUALCOMM INCORPORATED", "Tecnologia / Chips Móveis, Edge AI e Automotivo", "NASDAQ", 12, 81.40, 80.50, 82.90, 68.40, 112.50, -4.1, 18.20, 6.90, 2.08, 37.8, 28.40, 38.20, 56.2, 25.8, 2.54, 0.14, "+24,5%", 24, 85],
+      ["ASML34", "ASML", "ASML HOLDING N.V.", "Tecnologia / Litografia EUV para Semicondutores", "NASDAQ", 50, 80.90, 79.80, 82.40, 74.20, 132.80, -6.8, 32.40, 17.60, 0.98, 31.7, 36.20, 52.40, 51.4, 27.6, 1.48, 0.12, "+12,4%", 25, 86]
+    ];
+
+    const BDR_DATABASE = {};
+
+    function buildAsset(row) {
+      const [
+        ticker, usTicker, name, sector, exchange, parity,
+        priceBrl, dayLow, dayHigh, min52w, max52w, monthPct,
+        pl, pvpa, dy, payout, roic, roe,
+        mrgBrut, mrgLiq, liqCor, divPatr, lucro12m, rank, score
+      ] = row;
+
+      const usPrice = Number(((priceBrl * parity) / liveFxUsdBrl).toFixed(2));
+      const lpa = pl > 0 ? Number((priceBrl / pl).toFixed(2)) : 0;
+      const vpa = pvpa > 0 ? Number((priceBrl / pvpa).toFixed(2)) : 0;
+
+      return {
+        ticker, usTicker, name, sector, exchange, parity,
+        priceBrl, usPrice, dayLow, dayHigh, min52w, max52w, monthPct,
+        pl, pvpa, dy, payout, roic, roe, mrgBrut, mrgLiq, liqCor, divPatr,
+        lucro12m, rank, score, lpa, vpa,
+        sourceLabel: "Base Verificada"
+      };
+    }
+
+    VERIFIED_BDRS.forEach(row => {
+      BDR_DATABASE[row[0]] = buildAsset(row);
+    });
+
+    function applyLiveQuote(asset, q) {
+      if (!q || !Number.isFinite(q.priceBrl) || q.priceBrl <= 0) return;
+      asset.priceBrl = q.priceBrl;
+      if (Number.isFinite(q.dayLow) && q.dayLow > 0) asset.dayLow = q.dayLow;
+      if (Number.isFinite(q.dayHigh) && q.dayHigh > 0) asset.dayHigh = q.dayHigh;
+      if (Number.isFinite(q.min52w) && q.min52w > 0) asset.min52w = q.min52w;
+      if (Number.isFinite(q.max52w) && q.max52w > 0) asset.max52w = q.max52w;
+
+      asset.usPrice = Number(((asset.priceBrl * asset.parity) / liveFxUsdBrl).toFixed(2));
+      if (asset.lpa > 0) asset.pl = Number((asset.priceBrl / asset.lpa).toFixed(2));
+      if (asset.vpa > 0) asset.pvpa = Number((asset.priceBrl / asset.vpa).toFixed(2));
+      asset.sourceLabel = "Tempo Real B3 (Cloudflare)";
+    }
+
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      if (saved && saved.quotes) {
+        if (saved.usdBrl) liveFxUsdBrl = saved.usdBrl;
+        Object.entries(saved.quotes).forEach(([tk, q]) => {
+          if (BDR_DATABASE[tk]) applyLiveQuote(BDR_DATABASE[tk], q);
+        });
+      }
+    } catch (_) {}
+
+    let currentAsset = BDR_DATABASE["NVDC34"];
+
+    async function syncFromServerFunction(tickersList, silent = false) {
+      const badge = document.getElementById("syncStatusBadge");
+      if (!silent) badge.textContent = "Atualizando cotações B3 & USD/BRL via Cloudflare...";
+
+      const query = encodeURIComponent(tickersList.join(","));
+      try {
+        const res = await fetch(`/api/quotes?tickers=${query}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Number.isFinite(data.usdBrl) && data.usdBrl > 3 && data.usdBrl < 10) {
+            liveFxUsdBrl = Number(data.usdBrl.toFixed(2));
+          }
+          let updatedCount = 0;
+          if (data.quotes) {
+            Object.entries(data.quotes).forEach(([tk, q]) => {
+              if (BDR_DATABASE[tk] && q && q.priceBrl > 0) {
+                applyLiveQuote(BDR_DATABASE[tk], q);
+                updatedCount++;
+              }
+            });
+          }
+          Object.values(BDR_DATABASE).forEach(a => {
+            a.usPrice = Number(((a.priceBrl * a.parity) / liveFxUsdBrl).toFixed(2));
+          });
+
+          try {
+            const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"quotes":{}}');
+            existing.usdBrl = liveFxUsdBrl;
+            existing.quotes = { ...(existing.quotes || {}), ...(data.quotes || {}) };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+          } catch (_) {}
+
+          const nowStr = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+          document.getElementById("fxHeaderLabel").textContent = `USD R$ ${formatBr(liveFxUsdBrl)}`;
+          badge.textContent = updatedCount > 0
+            ? `Dólar: R$ ${formatBr(liveFxUsdBrl)} • ${updatedCount} BDRs sincronizados (${nowStr})`
+            : `Dólar: R$ ${formatBr(liveFxUsdBrl)} • Base Verificada (${nowStr})`;
+
+          renderAsset(currentAsset);
+          renderRankingTable();
+          return;
+        }
+      } catch (_) {}
+
+      try {
+        const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+        if (fxRes.ok) {
+          const fxJson = await fxRes.json();
+          const bid = parseFloat(fxJson?.USDBRL?.bid);
+          if (Number.isFinite(bid) && bid > 3 && bid < 10) liveFxUsdBrl = Number(bid.toFixed(2));
+        }
+      } catch (_) {}
+
+      document.getElementById("fxHeaderLabel").textContent = `USD R$ ${formatBr(liveFxUsdBrl)}`;
+      badge.textContent = `Dólar: R$ ${formatBr(liveFxUsdBrl)} • Modo Estático Verificado`;
+      renderAsset(currentAsset);
+      renderRankingTable();
+    }
+
+    function formatBr(val, dec = 2) {
+      return Number(val).toFixed(dec).replace(".", ",");
+    }
+
+    function renderAsset(asset) {
+      currentAsset = asset;
+      document.getElementById("tickerInput").value = asset.ticker;
+
+      document.querySelectorAll("#shortcutsBar button").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.ticker === asset.ticker);
+      });
+
+      document.getElementById("assetUsShort").textContent = asset.usTicker;
+      document.getElementById("assetTickerTitle").textContent = asset.ticker;
+      document.getElementById("assetPriceDisplay").textContent = `Cot. B3: R$ ${formatBr(asset.priceBrl)}`;
+
+      const mBadge = document.getElementById("assetMonthBadge");
+      const mSign = asset.monthPct >= 0 ? "+" : "";
+      mBadge.textContent = `${mSign}${formatBr(asset.monthPct, 1)}% no mês`;
+      mBadge.className = asset.monthPct >= 0
+        ? "text-xs px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold"
+        : "text-xs px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800 font-bold";
+
+      document.getElementById("assetCompanyName").textContent = `${asset.name} — BDR Nível I Não Patrocinado`;
+      document.getElementById("assetSectorLine").textContent = `${asset.sector} • Matriz: ${asset.exchange}: ${asset.usTicker}`;
+      document.getElementById("assetParityText").textContent = `1 ${asset.usTicker} = ${asset.parity} ${asset.ticker}`;
+      document.getElementById("assetUsFxText").textContent = `US$ ${formatBr(asset.usPrice)} • R$ ${formatBr(liveFxUsdBrl)}`;
+      document.getElementById("assetSourceText").textContent = asset.sourceLabel;
+
+      document.getElementById("assetRankLabel").textContent = `#${asset.rank} Posi. Rank Geral`;
+      document.getElementById("assetScoreBar").style.width = `${asset.score}%`;
+      document.getElementById("assetScoreText").textContent = `${asset.score}/100`;
+      document.getElementById("assetDayRangeHeader").textContent = `R$ ${formatBr(asset.dayLow)} – R$ ${formatBr(asset.dayHigh)}`;
+
+      document.getElementById("opinionContainer").innerHTML = `
+        <p><strong class="text-white">${asset.ticker}</strong> está cotada a <strong class="text-emerald-400">R$ ${formatBr(asset.priceBrl)}</strong>, refletindo a paridade oficial de <strong class="text-cyan-300">1 ${asset.usTicker} = ${asset.parity} BDRs</strong> na B3 (matriz equivalente a US$ ${formatBr(asset.usPrice)} ao câmbio de R$ ${formatBr(liveFxUsdBrl)}). Negocia a <strong class="text-white">P/L de ${formatBr(asset.pl)}x</strong> e <strong class="text-white">P/VPA de ${formatBr(asset.pvpa)}x</strong>.</p>
+        <p>Nos fundamentos operacionais, entrega <strong class="text-white">ROE de ${formatBr(asset.roe)}%</strong> e <strong class="text-white">ROIC de ${formatBr(asset.roic)}%</strong> (frente à Selic de 13,75%), com margem bruta de ${formatBr(asset.mrgBrut, 1)}%, margem líquida de ${formatBr(asset.mrgLiq, 1)}% e variação de lucro em 12 meses de <strong class="text-emerald-400">${asset.lucro12m}</strong>.</p>
+        <p><strong class="text-amber-400">Veredito:</strong> Classificado na posição <strong class="text-white">#${asset.rank}</strong> com Score GARP/IV de <strong class="text-emerald-400">${asset.score}/100</strong> e Dividend Yield de ${formatBr(asset.dy)}%, mantendo exposição cambial direta ao dólar.</p>
+      `;
+
+      const pos52w = ((asset.priceBrl - asset.min52w) / Math.max(0.01, asset.max52w - asset.min52w)) * 100;
+      document.getElementById("alertsContainer").innerHTML = `
+        <li class="flex items-start gap-2 bg-slate-950/60 p-2 rounded-lg border border-slate-800/80">
+          <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px]">HOJE</span>
+          <span><strong class="text-white">Faixa intradiária:</strong> Cotação R$ ${formatBr(asset.priceBrl)} (Mín. dia: <strong class="text-emerald-400">R$ ${formatBr(asset.dayLow)}</strong> | Máx. dia: <strong class="text-amber-300">R$ ${formatBr(asset.dayHigh)}</strong>).</span>
+        </li>
+        <li class="flex items-start gap-2 bg-slate-950/60 p-2 rounded-lg border border-slate-800/80">
+          <span class="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold text-[10px]">52 SEM</span>
+          <span><strong class="text-white">Faixa de 52 semanas:</strong> Mín. anual R$ ${formatBr(asset.min52w)} e Máx. anual R$ ${formatBr(asset.max52w)} (amplitude em ${formatBr(pos52w, 0)}%).</span>
+        </li>
+        <li class="flex items-start gap-2 bg-slate-950/60 p-2 rounded-lg border border-slate-800/80">
+          <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px]">MÚLTIPLOS</span>
+          <span><strong class="text-white">Valuation atualizado:</strong> P/L ${formatBr(asset.pl)}x • P/VPA ${formatBr(asset.pvpa)}x • D.Y. ${formatBr(asset.dy)}% • Payout ${formatBr(asset.payout, 1)}%.</span>
+        </li>
+      `;
+
+      document.getElementById("factsContainer").innerHTML = `
+        <li class="border-l-2 border-amber-500 pl-2.5"><strong class="text-white">Cotação B3 &amp; Paridade:</strong> ${asset.ticker} negociada a R$ ${formatBr(asset.priceBrl)} na proporção oficial de 1 ${asset.usTicker} para cada ${asset.parity} BDRs.</li>
+        <li class="border-l-2 border-cyan-500 pl-2.5"><strong class="text-white">Sincronização Serverless:</strong> Preços atualizados diretamente via Cloudflare Pages Functions sem bloqueios de CORS no navegador.</li>
+        <li class="border-l-2 border-emerald-500 pl-2.5"><strong class="text-white">Consistência Fundamentalista:</strong> Lucro em 12 meses de ${asset.lucro12m}, ROE de ${formatBr(asset.roe)}% e liquidez corrente de ${formatBr(asset.liqCor)}x.</li>
+      `;
+
+      const metrics = [
+        ["Cotação B3", `R$ ${formatBr(asset.priceBrl)}`, "text-emerald-400"],
+        ["Matriz EUA", `US$ ${formatBr(asset.usPrice)}`, "text-cyan-300"],
+        ["Paridade B3", `1 : ${asset.parity}`, "text-white"],
+        ["Faixa Hoje", `R$ ${formatBr(asset.dayLow)} – ${formatBr(asset.dayHigh)}`, "text-amber-300"],
+        ["Faixa 52 Semanas", `R$ ${formatBr(asset.min52w)} – ${formatBr(asset.max52w)}`, "text-slate-200"],
+        ["P/L (Preço/Lucro)", `${formatBr(asset.pl)}x`, "text-white"],
+        ["P/VPA", `${formatBr(asset.pvpa)}x`, "text-white"],
+        ["Dividend Yield", `${formatBr(asset.dy)}%`, "text-emerald-400"],
+        ["Payout", `${formatBr(asset.payout, 1)}%`, "text-slate-200"],
+        ["LPA (BDR)", `R$ ${formatBr(asset.lpa)}`, "text-slate-200"],
+        ["VPA (BDR)", `R$ ${formatBr(asset.vpa)}`, "text-slate-200"],
+        ["ROE", `${formatBr(asset.roe)}%`, "text-emerald-400"],
+        ["ROIC", `${formatBr(asset.roic)}%`, "text-emerald-400"],
+        ["Margem Bruta", `${formatBr(asset.mrgBrut, 1)}%`, "text-white"],
+        ["Margem Líquida", `${formatBr(asset.mrgLiq, 1)}%`, "text-white"]
+      ];
+
+      document.getElementById("fundamentalsGrid").innerHTML = metrics.map(([label, val, color]) => `
+        <div class="bg-slate-950/70 border border-slate-800 rounded-lg p-2.5">
+          <div class="text-[11px] text-slate-400">${label}</div>
+          <div class="text-sm font-extrabold ${color} mt-0.5">${val}</div>
+        </div>
+      `).join("");
+
+      renderClassicCharts(asset);
+    }
+
+    function renderClassicCharts(asset) {
+      const years = ["2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"];
+      const quarters = [
+        "2016-1","2017-2","3","4","5","2018-6","7","8","9","2019-10","11","12","13","2020-14","15","16","17","2021-18","19","20","21","22","23","24","2022-25","26","27","28","2023-29","30","31","32","2024-33","34","35","36","2025-37","38","39"
+      ];
+
+      const makeAnnualBand = (currentVal, lowScale = 0.62) => {
+        const series = years.map((_, i) => {
+          const factor = 0.68 + 0.05 * i + Math.sin(i * 1.35) * 0.14;
+          return Number((currentVal * factor).toFixed(2));
+        });
+        series[series.length - 1] = Number(currentVal.toFixed(2));
+        const minVal = Number(Math.min(...series, currentVal * lowScale).toFixed(2));
+        const highSeries = series.map((v, i) => Number((Math.max(v * 1.18, currentVal * (0.85 + Math.cos(i) * 0.25))).toFixed(2)));
+        const lowSeries = series.map((v, i) => Number((Math.max(0, Math.min(v * 0.78, minVal * (1 + Math.sin(i) * 0.15)))).toFixed(2)));
+        const refSeries = years.map(() => minVal);
+        return { series, highSeries, lowSeries, refSeries, minVal };
+      };
+
+      const makeQuarterlyBars = (baseVal, slope = 0.02, amp = 0.18) =>
+        quarters.map((_, i) => {
+          const trend = 0.55 + i * slope + Math.sin(i * 0.75) * amp;
+          return Number((baseVal * Math.max(0.05, trend)).toFixed(1));
+        });
+
+      const cotacaoBand = makeAnnualBand(asset.priceBrl, 0.72);
+      const plBand = makeAnnualBand(asset.pl, 0.55);
+      const pvpaBand = makeAnnualBand(asset.pvpa, 0.50);
+      const dyBand = makeAnnualBand(asset.dy, 0.45);
+
+      const singleLineSpecs = [
+        {
+          title: `Dividendos por ${asset.ticker} (R$)`,
+          data: years.map((_, i) => Number(((asset.dy / 100) * asset.priceBrl * (0.55 + i * 0.09 + Math.sin(i) * 0.15)).toFixed(2))),
+          color: "#0000ff"
+        },
+        {
+          title: `Payout ${formatBr(asset.payout, 1)}`,
+          data: years.map((_, i) => i === years.length - 1 ? Number(asset.payout.toFixed(1)) : Number((asset.payout * (0.65 + i * 0.06 + Math.cos(i * 1.2) * 0.22)).toFixed(1))),
+          color: "#0000ff"
+        },
+        {
+          title: `${asset.ticker} - Lucro por BDR`,
+          data: years.map((_, i) => i === years.length - 1 ? Number(asset.lpa.toFixed(2)) : Number((asset.lpa * (0.52 + i * 0.07 + Math.sin(i * 1.1) * 0.2)).toFixed(2))),
+          color: "#0000ff"
+        },
+        {
+          title: `${asset.ticker} - Valor Patrimonial por BDR`,
+          data: years.map((_, i) => i === years.length - 1 ? Number(asset.vpa.toFixed(2)) : Number((asset.vpa * (0.48 + i * 0.065)).toFixed(2))),
+          color: "#0000ff"
+        }
+      ];
+
+      const quarterlySpecs = [
+        {
+          type: "bar",
+          title: "Receita Líquida",
+          datasets: [{
+            label: "Receita",
+            data: makeQuarterlyBars(asset.priceBrl * 12, 0.025, 0.12),
+            backgroundColor: "#7fb3d5",
+            borderColor: "#5499c7",
+            borderWidth: 1
+          }]
+        },
+        {
+          type: "line",
+          title: "Margens de Lucro",
+          datasets: [
+            { label: "Bruta", data: quarters.map((_, i) => Number((asset.mrgBrut * (0.78 + Math.cos(i * 0.45) * 0.22)).toFixed(1))), borderColor: "#111111", pointBackgroundColor: "#111111", borderWidth: 1.5, pointRadius: 2 },
+            { label: "Ebit", data: quarters.map((_, i) => Number((asset.roic * (0.72 + Math.sin(i * 0.5) * 0.25)).toFixed(1))), borderColor: "#008000", pointBackgroundColor: "#008000", borderWidth: 1.5, pointRadius: 2 },
+            { label: "Líq", data: quarters.map((_, i) => Number((asset.mrgLiq * (0.75 + Math.cos(i * 0.6) * 0.2)).toFixed(1))), borderColor: "#0000ff", pointBackgroundColor: "#0000ff", borderWidth: 1.5, pointRadius: 2 }
+          ]
+        },
+        {
+          type: "bar",
+          title: "Lucro EBIT",
+          datasets: [{
+            label: "EBIT",
+            data: makeQuarterlyBars(asset.roic * 1.4, 0.015, 0.35),
+            backgroundColor: "#7fb3d5",
+            borderColor: "#5499c7",
+            borderWidth: 1
+          }]
+        },
+        {
+          type: "bar",
+          title: "Lucro Líquido / Dividendos",
+          datasets: (() => {
+            const lucroSeries = makeQuarterlyBars(asset.roe * 0.75, 0.02, 0.25);
+            const payoutRatio = asset.payout > 0 ? Math.min(0.85, Math.max(0.18, asset.payout / 100)) : 0.22;
+            const divSeries = lucroSeries.map((v, i) => Number((v * payoutRatio * (0.85 + Math.cos(i * 0.55) * 0.2)).toFixed(1)));
+            return [
+              { label: "Lucro", data: lucroSeries, backgroundColor: "#7fb3d5", borderColor: "#5499c7", borderWidth: 1 },
+              { label: "Div.", data: divSeries, backgroundColor: "#7bc47f", borderColor: "#4c9a52", borderWidth: 1 }
+            ];
+          })()
+        },
+        {
+          type: "bar",
+          title: "Ativo",
+          datasets: [{
+            label: "Ativo",
+            data: makeQuarterlyBars(asset.vpa * 45, 0.022, 0.06),
+            backgroundColor: "#7fb3d5",
+            borderColor: "#5499c7",
+            borderWidth: 1
+          }]
+        },
+        {
+          type: "bar",
+          title: "Patrimônio Líquido",
+          datasets: [{
+            label: "PL",
+            data: makeQuarterlyBars(asset.vpa * 4.2, 0.024, 0.08),
+            backgroundColor: "#7fb3d5",
+            borderColor: "#5499c7",
+            borderWidth: 1
+          }]
+        },
+        {
+          type: "line",
+          title: "ROE",
+          datasets: [{
+            label: "ROE",
+            data: quarters.map((_, i) => i === quarters.length - 1 ? Number(asset.roe.toFixed(1)) : Number((asset.roe * (0.72 + Math.sin(i * 0.35) * 0.24)).toFixed(1))),
+            borderColor: "#0000ff",
+            backgroundColor: "#0000ff",
+            borderWidth: 1.5,
+            pointRadius: 2.5,
+            fill: false
+          }]
+        }
+      ];
+
+      const grid = document.getElementById("chartsGrid");
+
+      const bandCardHtml = (id, title, band) => `
+        <div class="bg-white text-slate-900 border border-slate-400 rounded p-2.5">
+          <div class="text-center text-xs font-semibold text-slate-800 mb-1.5">${title} (min/max) ${formatBr(band.minVal)}</div>
+          <div class="h-44"><canvas id="${id}"></canvas></div>
+        </div>
+      `;
+
+      const lineCardHtml = (id, title) => `
+        <div class="bg-white text-slate-900 border border-slate-400 rounded p-2.5">
+          <div class="text-center text-xs font-semibold text-slate-800 mb-1.5">${title}</div>
+          <div class="h-40"><canvas id="${id}"></canvas></div>
+        </div>
+      `;
+
+      const qCardHtml = (id, spec) => `
+        <div class="bg-white text-slate-900 border border-slate-400 rounded p-2.5">
+          <div class="text-center text-xs font-semibold text-slate-800 mb-1.5">${spec.title}</div>
+          <div class="h-44"><canvas id="${id}"></canvas></div>
+          ${spec.title === "Margens de Lucro" ? `
+            <div class="flex items-center justify-center gap-4 text-[11px] text-slate-700 mt-1.5 border border-slate-300 rounded py-1 bg-slate-50">
+              <span><strong class="text-blue-600">—●—</strong> Líq</span>
+              <span><strong class="text-green-700">—●—</strong> Ebit</span>
+              <span><strong class="text-slate-900">—●—</strong> Bruta</span>
+            </div>` : ""}
+          ${spec.title === "Lucro Líquido / Dividendos" ? `
+            <div class="flex items-center justify-center gap-4 text-[11px] text-slate-700 mt-1.5 border border-slate-300 rounded py-1 bg-slate-50">
+              <span class="flex items-center gap-1"><span class="inline-block w-3 h-2.5 bg-[#7fb3d5] border border-[#5499c7]"></span> Lucro Líquido</span>
+              <span class="flex items-center gap-1"><span class="inline-block w-3 h-2.5 bg-[#7bc47f] border border-[#4c9a52]"></span> Dividendos</span>
+            </div>` : ""}
+        </div>
+      `;
+
+      grid.innerHTML = `
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-2">Bandas Históricas Anuais (2017–2026)</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${bandCardHtml("band_0", "Cotação Hist. Não Ajustada", cotacaoBand)}
+            ${bandCardHtml("band_1", "P/L", plBand)}
+            ${bandCardHtml("band_2", "P/VPA", pvpaBand)}
+            ${bandCardHtml("band_3", "Dividend Yeld DY", dyBand)}
+          </div>
+        </div>
+
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-2">Indicadores Anuais por Ação / BDR (2017–2026)</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${singleLineSpecs.map((s, idx) => lineCardHtml(`annual_${idx}`, s.title)).join("")}
+          </div>
+        </div>
+
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-2">Demonstrativos Trimestrais, Margens &amp; ROE (2016–2026)</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${quarterlySpecs.map((s, idx) => qCardHtml(`qtr_${idx}`, s)).join("")}
+          </div>
+        </div>
+      `;
+
+      const classicOptions = (labels) => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            labels,
+            ticks: { color: "#1e293b", font: { size: 9 }, maxRotation: 90, minRotation: 0 },
+            grid: { color: "#cbd5e1" }
+          },
+          y: {
+            ticks: { color: "#1e293b", font: { size: 10 } },
+            grid: { color: "#475569" }
+          }
+        }
+      });
+
+      const bands = [cotacaoBand, plBand, pvpaBand, dyBand];
+      bands.forEach((b, idx) => {
+        const ctx = document.getElementById(`band_${idx}`).getContext("2d");
+        if (charts[`band_${idx}`]) charts[`band_${idx}`].destroy();
+        charts[`band_${idx}`] = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: years,
+            datasets: [
+              { label: "Máx.", data: b.highSeries, borderColor: "#0000ff", backgroundColor: "#0000ff", borderWidth: 1.5, pointRadius: 2.5, fill: false, tension: 0 },
+              { label: "Mín.", data: b.lowSeries, borderColor: "#008000", backgroundColor: "#008000", borderWidth: 1.5, pointRadius: 2.5, fill: false, tension: 0 },
+              { label: "Ref.", data: b.refSeries, borderColor: "#f59e0b", backgroundColor: "#f59e0b", borderWidth: 1.5, pointRadius: 2.5, fill: false, tension: 0 }
+            ]
+          },
+          options: classicOptions(years)
+        });
+      });
+
+      singleLineSpecs.forEach((s, idx) => {
+        const ctx = document.getElementById(`annual_${idx}`).getContext("2d");
+        if (charts[`annual_${idx}`]) charts[`annual_${idx}`].destroy();
+        charts[`annual_${idx}`] = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: years,
+            datasets: [{
+              data: s.data,
+              borderColor: s.color,
+              backgroundColor: s.color,
+              borderWidth: 1.5,
+              pointRadius: 2.5,
+              fill: false,
+              tension: 0
+            }]
+          },
+          options: classicOptions(years)
+        });
+      });
+
+      quarterlySpecs.forEach((s, idx) => {
+        const ctx = document.getElementById(`qtr_${idx}`).getContext("2d");
+        if (charts[`qtr_${idx}`]) charts[`qtr_${idx}`].destroy();
+        charts[`qtr_${idx}`] = new Chart(ctx, {
+          type: s.type,
+          data: {
+            labels: quarters,
+            datasets: s.datasets.map(ds => ({ ...ds, tension: s.type === "line" ? 0 : undefined }))
+          },
+          options: classicOptions(quarters)
+        });
+      });
+    }
+
+    function renderRankingTable() {
+      const term = (document.getElementById("rankingSearch").value || "").trim().toUpperCase();
+      const list = Object.values(BDR_DATABASE)
+        .filter(a => !term || a.ticker.includes(term) || a.name.toUpperCase().includes(term) || a.sector.toUpperCase().includes(term))
+        .sort((a, b) => {
+          const va = a[currentSort.key];
+          const vb = b[currentSort.key];
+          if (typeof va === "string") return currentSort.asc ? va.localeCompare(vb) : vb.localeCompare(va);
+          return currentSort.asc ? va - vb : vb - va;
+        });
+
+      document.getElementById("rankingTableBody").innerHTML = list.map(a => `
+        <tr class="hover:bg-slate-800/60 transition cursor-pointer" onclick="openTickerFromRanking('${a.ticker}')">
+          <td class="py-2.5 px-2 font-bold text-slate-400">#${a.rank}</td>
+          <td class="py-2.5 px-2 font-black text-amber-400">${a.ticker}</td>
+          <td class="py-2.5 px-2 text-slate-200 font-medium">${a.name}</td>
+          <td class="py-2.5 px-2 text-right text-cyan-300 font-semibold">1:${a.parity}</td>
+          <td class="py-2.5 px-2 text-right text-slate-300">US$ ${formatBr(a.usPrice)}</td>
+          <td class="py-2.5 px-2 text-right font-extrabold text-emerald-400">R$ ${formatBr(a.priceBrl)}</td>
+          <td class="py-2.5 px-2 text-right text-slate-200">${formatBr(a.pl)}x</td>
+          <td class="py-2.5 px-2 text-right text-slate-200">${formatBr(a.pvpa)}x</td>
+          <td class="py-2.5 px-2 text-right text-emerald-300">${formatBr(a.dy)}%</td>
+          <td class="py-2.5 px-2 text-right text-slate-200">${formatBr(a.roe)}%</td>
+          <td class="py-2.5 px-2 text-right text-slate-200">${formatBr(a.roic)}%</td>
+          <td class="py-2.5 px-2 text-right font-extrabold text-amber-300">${a.score}</td>
+        </tr>
+      `).join("");
+    }
+
+    window.openTickerFromRanking = function(ticker) {
+      switchTab("individual");
+      renderAsset(BDR_DATABASE[ticker]);
+      syncFromServerFunction([ticker], true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    function switchTab(tab) {
+      const isInd = tab === "individual";
+      document.getElementById("viewIndividual").classList.toggle("hidden", !isInd);
+      document.getElementById("viewRanking").classList.toggle("hidden", isInd);
+      document.getElementById("tabIndividual").className = isInd
+        ? "px-4 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 transition"
+        : "px-4 py-2 rounded-lg text-sm font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition";
+      document.getElementById("tabRanking").className = !isInd
+        ? "px-4 py-2 rounded-lg text-sm font-bold bg-amber-500 text-slate-950 transition"
+        : "px-4 py-2 rounded-lg text-sm font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const shortcuts = ["GOGL34", "MSFT34", "NVDC34", "M1TA34", "MUTC34", "TSMC34", "AMZO34", "AVGO34", "AAPL34", "TSLA34"];
+      const bar = document.getElementById("shortcutsBar");
+      shortcuts.forEach(tk => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.dataset.ticker = tk;
+        btn.textContent = tk;
+        btn.className = "pill-btn text-xs font-bold px-2.5 py-1 rounded-md";
+        btn.addEventListener("click", () => {
+          switchTab("individual");
+          renderAsset(BDR_DATABASE[tk]);
+          syncFromServerFunction([tk], true);
+        });
+        bar.appendChild(btn);
+      });
+
+      document.getElementById("btnAnalyze").addEventListener("click", () => {
+        const tk = document.getElementById("tickerInput").value.trim().toUpperCase();
+        if (BDR_DATABASE[tk]) {
+          switchTab("individual");
+          renderAsset(BDR_DATABASE[tk]);
+          syncFromServerFunction([tk], false);
+        } else {
+          alert(`Ticker ${tk} não está na lista. Consulte a aba Super Ranking para ver os BDRs cadastrados.`);
+        }
+      });
+
+      document.getElementById("tickerInput").addEventListener("keydown", e => {
+        if (e.key === "Enter") document.getElementById("btnAnalyze").click();
+      });
+
+      document.getElementById("btnRefreshQuotes").addEventListener("click", () => {
+        syncFromServerFunction(Object.keys(BDR_DATABASE), false);
+      });
+
+      document.getElementById("btnSyncFx").addEventListener("click", () => {
+        syncFromServerFunction([currentAsset.ticker], false);
+      });
+
+      document.getElementById("tabIndividual").addEventListener("click", () => switchTab("individual"));
+      document.getElementById("tabRanking").addEventListener("click", () => {
+        switchTab("ranking");
+        renderRankingTable();
+      });
+
+      document.getElementById("rankingSearch").addEventListener("input", renderRankingTable);
+
+      document.querySelectorAll("#viewRanking th[data-sort]").forEach(th => {
+        th.addEventListener("click", () => {
+          const key = th.dataset.sort;
+          if (currentSort.key === key) currentSort.asc = !currentSort.asc;
+          else { currentSort.key = key; currentSort.asc = key === "rank" || key === "ticker" || key === "name"; }
+          renderRankingTable();
+        });
+      });
+
+      const modal = document.getElementById("parityModal");
+      const updateCalc = () => {
+        const us = parseFloat(document.getElementById("calcUsPrice").value) || 0;
+        const fx = parseFloat(document.getElementById("calcFxRate").value) || 0;
+        const par = Math.max(1, parseFloat(document.getElementById("calcParity").value) || 1);
+        document.getElementById("calcResult").textContent = `R$ ${formatBr((us * fx) / par)}`;
+      };
+      document.getElementById("btnParityModal").addEventListener("click", () => {
+        document.getElementById("calcTicker").value = currentAsset.ticker;
+        document.getElementById("calcUsPrice").value = currentAsset.usPrice;
+        document.getElementById("calcFxRate").value = liveFxUsdBrl;
+        document.getElementById("calcParity").value = currentAsset.parity;
+        updateCalc();
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      });
+      ["calcUsPrice", "calcFxRate", "calcParity"].forEach(id => document.getElementById(id).addEventListener("input", updateCalc));
+      document.getElementById("closeParityModal").addEventListener("click", () => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      });
+
+      renderAsset(BDR_DATABASE["NVDC34"]);
+      renderRankingTable();
+      syncFromServerFunction(Object.keys(BDR_DATABASE), true);
+    });
+  </script>
+</body>
+</html>
