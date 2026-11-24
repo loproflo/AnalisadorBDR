@@ -642,7 +642,6 @@
       };
 
       const makeQuarterlyBars = (baseVal, slope = 0.02, amp = 0.18, allowCyclicalSign = false) => {
-        const growthFactor = 1 + (asset.lucro12mNum || 0) / 100;
         return quarters.map((_, i) => {
           const progress = i / Math.max(1, quarters.length - 1);
           if (allowCyclicalSign && (baseVal <= 4 || asset.lucro12mNum < -10)) {
@@ -849,7 +848,7 @@
         </div>
       `;
 
-      const classicOptions = (labels) => ({
+      const classicOptions = (labels, forceZeroMin = false) => ({
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
@@ -860,6 +859,7 @@
             grid: { color: "#cbd5e1" }
           },
           y: {
+            ...(forceZeroMin ? { min: 0 } : {}),
             ticks: { color: "#1e293b", font: { size: 10 } },
             grid: { color: "#475569" }
           }
@@ -880,7 +880,7 @@
               { label: "Ref.", data: b.refSeries, borderColor: "#f59e0b", backgroundColor: "#f59e0b", borderWidth: 1.5, pointRadius: 2.5, fill: false, tension: 0 }
             ]
           },
-          options: classicOptions(years)
+          options: classicOptions(years, true)
         });
       });
 
@@ -901,7 +901,7 @@
               tension: 0
             }]
           },
-          options: classicOptions(years)
+          options: classicOptions(years, true)
         });
       });
 
@@ -914,7 +914,7 @@
             labels: quarters,
             datasets: s.datasets.map(ds => ({ ...ds, tension: s.type === "line" ? 0 : undefined }))
           },
-          options: classicOptions(quarters)
+          options: classicOptions(quarters, !s.datasets.some(ds => Array.isArray(ds.data) && ds.data.some(v => v < 0)))
         });
       });
     }
