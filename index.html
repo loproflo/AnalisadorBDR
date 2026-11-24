@@ -257,7 +257,7 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "analisador_bdr_cf_pages_v4";
+    const STORAGE_KEY = "analisador_bdr_cf_pages_v5";
     const FAVS_KEY = "analisador_bdr_favs_v1";
     const CLIENT_CACHE_TTL_MS = 30 * 1000; // 30 segundos para refletir oscilações rápidas
 
@@ -699,24 +699,43 @@
         {
           type: "bar",
           title: "Lucro EBIT",
-          datasets: [{
-            label: "EBIT",
-            data: makeQuarterlyBars(asset.roic * 1.4, 0.015, 0.35),
-            backgroundColor: "#7fb3d5",
-            borderColor: "#5499c7",
-            borderWidth: 1
-          }]
+          datasets: (() => {
+            const ebitSeries = makeQuarterlyBars(asset.roic * 1.4, 0.015, 0.35);
+            return [{
+              label: "EBIT",
+              data: ebitSeries,
+              backgroundColor: ebitSeries.map(v => v < 0 ? "#e06c75" : "#7fb3d5"),
+              borderColor: ebitSeries.map(v => v < 0 ? "#c0392b" : "#5499c7"),
+              borderWidth: 1
+            }];
+          })()
         },
         {
           type: "bar",
           title: "Lucro Líquido / Dividendos",
           datasets: (() => {
             const lucroSeries = makeQuarterlyBars(asset.roe * 0.75, 0.02, 0.25);
-            const payoutRatio = asset.payout > 0 ? Math.min(0.85, Math.max(0.18, asset.payout / 100)) : 0.22;
-            const divSeries = lucroSeries.map((v, i) => Number((v * payoutRatio * (0.85 + Math.cos(i * 0.55) * 0.2)).toFixed(1)));
+            const paysDiv = asset.payout > 0 && asset.dy > 0;
+            const payoutRatio = paysDiv ? Math.min(0.85, Math.max(0.12, asset.payout / 100)) : 0;
+            const divSeries = lucroSeries.map((v, i) => {
+              if (!paysDiv || v <= 0) return 0;
+              return Number((v * payoutRatio * (0.85 + Math.cos(i * 0.55) * 0.2)).toFixed(1));
+            });
             return [
-              { label: "Lucro", data: lucroSeries, backgroundColor: "#7fb3d5", borderColor: "#5499c7", borderWidth: 1 },
-              { label: "Div.", data: divSeries, backgroundColor: "#7bc47f", borderColor: "#4c9a52", borderWidth: 1 }
+              {
+                label: "Lucro",
+                data: lucroSeries,
+                backgroundColor: lucroSeries.map(v => v < 0 ? "#e06c75" : "#7fb3d5"),
+                borderColor: lucroSeries.map(v => v < 0 ? "#c0392b" : "#5499c7"),
+                borderWidth: 1
+              },
+              {
+                label: "Div.",
+                data: divSeries,
+                backgroundColor: "#7bc47f",
+                borderColor: "#4c9a52",
+                borderWidth: 1
+              }
             ];
           })()
         },
@@ -784,8 +803,9 @@
               <span><strong class="text-slate-900">—●—</strong> Bruta</span>
             </div>` : ""}
           ${spec.title === "Lucro Líquido / Dividendos" ? `
-            <div class="flex items-center justify-center gap-4 text-[11px] text-slate-700 mt-1.5 border border-slate-300 rounded py-1 bg-slate-50">
+            <div class="flex flex-wrap items-center justify-center gap-4 text-[11px] text-slate-700 mt-1.5 border border-slate-300 rounded py-1 bg-slate-50">
               <span class="flex items-center gap-1"><span class="inline-block w-3 h-2.5 bg-[#7fb3d5] border border-[#5499c7]"></span> Lucro Líquido</span>
+              <span class="flex items-center gap-1"><span class="inline-block w-3 h-2.5 bg-[#e06c75] border border-[#c0392b]"></span> Prejuízo</span>
               <span class="flex items-center gap-1"><span class="inline-block w-3 h-2.5 bg-[#7bc47f] border border-[#4c9a52]"></span> Dividendos</span>
             </div>` : ""}
         </div>
