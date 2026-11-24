@@ -1,9 +1,9 @@
-// functions/api/quotes.js (Cloudflare Pages Function - Cache 5 minutos)
+// functions/api/quotes.js (Cloudflare Pages Function - Atualização Rápida)
 const ALLOWED_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type",
   "Content-Type": "application/json; charset=utf-8",
-  "Cache-Control": "public, max-age=300, s-maxage=300"
+  "Cache-Control": "public, max-age=30, s-maxage=60"
 };
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 4500) {
@@ -21,21 +21,32 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 4500) {
 
 async function getUsdBrl() {
   try {
-    const res = await fetchWithTimeout("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+    const res = await fetchWithTimeout(`https://economia.awesomeapi.com.br/json/last/USD-BRL?_=${Date.now()}`, { cache: "no-store" });
     if (res.ok) {
       const data = await res.json();
       const bid = parseFloat(data?.USDBRL?.bid);
       if (Number.isFinite(bid) && bid > 3 && bid < 10) return Number(bid.toFixed(4));
     }
   } catch (_) {}
+  try {
+    const res2 = await fetchWithTimeout("https://query1.finance.yahoo.com/v8/finance/chart/BRL=X?interval=1m&range=1d", {
+      headers: { "User-Agent": "Mozilla/5.0" }
+    });
+    if (res2.ok) {
+      const j2 = await res2.json();
+      const px = parseFloat(j2?.chart?.result?.[0]?.meta?.regularMarketPrice);
+      if (Number.isFinite(px) && px > 3 && px < 10) return Number(px.toFixed(4));
+    }
+  } catch (_) {}
   return null;
 }
 
-async function fetchYahooQuote(tickerSa) {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(tickerSa)}?interval=1d&range=5d`;
+async function fetchYahooChartQuote(tickerSa) {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(tickerSa)}?interval=1m&range=1d&_=${Date.now()}`;
   const res = await fetchWithTimeout(url, {
     headers: {
-      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+      "Cache-Control": "no-cache"
     }
   }, 4500);
   if (!res.ok) return null;
@@ -88,7 +99,7 @@ export async function onRequest(context) {
       const results = await Promise.all(
         batch.map(async (tk) => {
           const saSymbol = tk.endsWith(".SA") ? tk : `${tk}.SA`;
-          const data = await fetchYahooQuote(saSymbol);
+          const data = await fetchYahooChartQuote(saSymbol);
           return [tk.replace(/\.SA$/, ""), data];
         })
       );
@@ -102,7 +113,7 @@ export async function onRequest(context) {
     return new Response(
       JSON.stringify({
         ok: true,
-        cacheTtlSeconds: 300,
+        cacheTtlSeconds: 60,
         updatedAt: new Date().toISOString(),
         usdBrl,
         quotes: quotesMap

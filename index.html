@@ -257,9 +257,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "analisador_bdr_cf_pages_v3";
+    const STORAGE_KEY = "analisador_bdr_cf_pages_v4";
     const FAVS_KEY = "analisador_bdr_favs_v1";
-    const CLIENT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+    const CLIENT_CACHE_TTL_MS = 30 * 1000; // 30 segundos para refletir oscilações rápidas
 
     Object.keys(localStorage).forEach(k => {
       if (k.startsWith("analisador_bdr_") && k !== STORAGE_KEY && k !== FAVS_KEY) localStorage.removeItem(k);
@@ -335,7 +335,7 @@
       if (asset.lpa > 0) asset.pl = Number((asset.priceBrl / asset.lpa).toFixed(2));
       if (asset.vpa > 0) asset.pvpa = Number((asset.priceBrl / asset.vpa).toFixed(2));
       asset.lastSyncTs = ts;
-      asset.sourceLabel = "Tempo Real B3 (Cache 5m)";
+      asset.sourceLabel = "Tempo Real B3";
     }
 
     try {
@@ -364,9 +364,22 @@
           });
 
       if (targets.length === 0) {
+        try {
+          const fxDirect = await fetch(`https://economia.awesomeapi.com.br/json/last/USD-BRL?_t=${now}`, { cache: "no-store" });
+          if (fxDirect.ok) {
+            const fxJson = await fxDirect.json();
+            const bid = parseFloat(fxJson?.USDBRL?.bid);
+            if (Number.isFinite(bid) && bid > 3 && bid < 10) {
+              liveFxUsdBrl = Number(bid.toFixed(2));
+              Object.values(BDR_DATABASE).forEach(a => {
+                a.usPrice = Number(((a.priceBrl * a.parity) / liveFxUsdBrl).toFixed(2));
+              });
+            }
+          }
+        } catch (_) {}
         const nowStr = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
         document.getElementById("fxHeaderLabel").textContent = `USD R$ ${formatBr(liveFxUsdBrl)}`;
-        badge.textContent = `Dólar: R$ ${formatBr(liveFxUsdBrl)} • Cache ativo 5m (${nowStr})`;
+        badge.textContent = `Dólar: R$ ${formatBr(liveFxUsdBrl)} • Cache ativo (${nowStr})`;
         renderAsset(currentAsset);
         if (!document.getElementById("viewRanking").classList.contains("hidden")) renderRankingTable();
         return;
@@ -378,14 +391,26 @@
       let totalUpdated = 0;
       const savedQuotesPayload = {};
 
+      try {
+        const fxDirect = await fetch(`https://economia.awesomeapi.com.br/json/last/USD-BRL?_t=${now}`, { cache: "no-store" });
+        if (fxDirect.ok) {
+          const fxJson = await fxDirect.json();
+          const bid = parseFloat(fxJson?.USDBRL?.bid);
+          if (Number.isFinite(bid) && bid > 3 && bid < 10) {
+            liveFxUsdBrl = Number(bid.toFixed(2));
+          }
+        }
+      } catch (_) {}
+
       for (let i = 0; i < targets.length; i += chunkSize) {
         const slice = targets.slice(i, i + chunkSize);
         const query = encodeURIComponent(slice.join(","));
+        const cb = force ? `&_t=${now}` : "";
         try {
-          const res = await fetch(`/api/quotes?tickers=${query}`);
+          const res = await fetch(`/api/quotes?tickers=${query}${cb}`, { cache: force ? "no-store" : "default" });
           if (res.ok) {
             const data = await res.json();
-            if (Number.isFinite(data.usdBrl) && data.usdBrl > 3 && data.usdBrl < 10) {
+            if (!force && Number.isFinite(data.usdBrl) && data.usdBrl > 3 && data.usdBrl < 10) {
               liveFxUsdBrl = Number(data.usdBrl.toFixed(2));
             }
             if (data.quotes) {
@@ -505,7 +530,7 @@
 
       document.getElementById("factsContainer").innerHTML = `
         <li class="border-l-2 border-amber-500 pl-2.5"><strong class="text-white">Cotação B3 &amp; Paridade:</strong> ${asset.ticker} negociada a R$ ${formatBr(asset.priceBrl)} na proporção oficial de 1 ${asset.usTicker} para cada ${asset.parity} BDRs.</li>
-        <li class="border-l-2 border-cyan-500 pl-2.5"><strong class="text-white">Carregamento Sob Demanda &amp; Cache 5m:</strong> Cotações sincronizadas sob demanda via Cloudflare Pages Functions com cache de 5 minutos para alta escalabilidade.</li>
+        <li class="border-l-2 border-cyan-500 pl-2.5"><strong class="text-white">Carregamento Sob Demanda &amp; Cache 5m:</strong> Cotações sincronizadas sob demanda via Cloudflare Pages Functions com atualização rápida para alta escalabilidade.</li>
         <li class="border-l-2 border-emerald-500 pl-2.5"><strong class="text-white">Consistência Fundamentalista:</strong> Lucro em 12 meses de ${asset.lucro12m}, ROE de ${formatBr(asset.roe)}% e liquidez corrente de ${formatBr(asset.liqCor)}x.</li>
       `;
 
@@ -979,7 +1004,7 @@
       });
 
       document.getElementById("btnRefreshQuotes").addEventListener("click", () => {
-        syncFromServerFunction(Object.keys(BDR_DATABASE), { silent: false, force: false });
+        syncFromServerFunction([currentAsset.ticker, ...Object.keys(BDR_DATABASE).filter(t => t !== currentAsset.ticker)], { silent: false, force: true });
       });
 
       document.getElementById("btnSyncFx").addEventListener("click", () => {
